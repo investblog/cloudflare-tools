@@ -37,10 +37,16 @@ export interface TaskEntry {
 
 export type BatchStatus = 'pending' | 'running' | 'paused' | 'completed' | 'cancelled';
 
+export interface BatchOptions {
+  type?: 'full' | 'partial';
+  jumpStart?: boolean;
+}
+
 export interface BatchInfo {
   id: string;
   operation: TaskOperation;
   accountId: string;
+  options?: BatchOptions;
   totalCount: number;
   processedCount: number;
   successCount: number;

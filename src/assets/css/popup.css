@@ -59,6 +59,18 @@
   color: var(--text-muted);
 }
 
+.popup__account {
+  margin-bottom: var(--space-3);
+}
+
+.popup__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .popup__actions {
   display: flex;
   flex-direction: column;

@@ -59,6 +59,7 @@ const DEFAULT_SETTINGS: Settings = {
   autoLockTimeoutMinutes: 15,
   maxConcurrency: 4,
   enableDashboardButtons: false,
+  lockOnUnload: true,
 };
 
 async function loadSettings(): Promise<Settings> {
@@ -109,7 +110,8 @@ async function processBatch(batchId: string): Promise<void> {
         if (batch.operation === 'create') {
           const zone = await cfClient.createZone(
             encodeDomain(task.domain),
-            batch.accountId
+            batch.accountId,
+            batch.options
           );
           result.zoneId = zone.id;
         } else if (batch.operation === 'delete') {
@@ -192,6 +194,22 @@ async function updateBatchCounters(batchId: string): Promise<void> {
 function broadcastEvent(event: BatchProgressEvent | BatchCompletedEvent): void {
   chrome.runtime.sendMessage(event).catch(() => {
     // Panel might not be open, ignore error
+  });
+}
+
+function broadcastSettingsChanged(settings: Settings): void {
+  // Broadcast to all tabs (content scripts)
+  chrome.tabs.query({ url: 'https://dash.cloudflare.com/*' }).then((tabs) => {
+    tabs.forEach((tab) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'SETTINGS_CHANGED',
+          payload: settings,
+        }).catch(() => {
+          // Tab might not have content script, ignore
+        });
+      }
+    });
   });
 }
 
@@ -341,10 +359,10 @@ async function handleMessage(
 
       // ====== Batch Operations ======
       case 'START_BATCH': {
-        const { operation, accountId, domains, zoneIds } = message.payload;
+        const { operation, accountId, domains, zoneIds, options } = message.payload;
         const items = operation === 'create' ? domains! : zoneIds!;
 
-        const batchId = await ledger.createBatch(operation, accountId, items);
+        const batchId = await ledger.createBatch(operation, accountId, items, options);
 
         // Start processing in background
         processBatch(batchId);
@@ -454,11 +472,23 @@ async function handleMessage(
         // Apply settings
         await vault.updateConfig({
           autoLockTimeoutMs: newSettings.autoLockTimeoutMinutes * 60 * 1000,
+          lockOnUnload: newSettings.lockOnUnload,
         });
         updatePoolConcurrency(newSettings.maxConcurrency);
 
+        // Broadcast settings change to content scripts
+        broadcastSettingsChanged(newSettings);
+
         const response: GetSettingsResponse = { settings: newSettings };
         return { success: true, data: response };
+      }
+
+      case 'OPEN_SIDE_PANEL': {
+        // Open side panel for the sender tab
+        if (_sender.tab?.id) {
+          await chrome.sidePanel.open({ tabId: _sender.tab.id });
+        }
+        return { success: true, data: { opened: true } };
       }
 
       default:
@@ -510,6 +540,7 @@ async function initializeModules(): Promise<void> {
     const settings = await loadSettings();
     await vault.updateConfig({
       autoLockTimeoutMs: settings.autoLockTimeoutMinutes * 60 * 1000,
+      lockOnUnload: settings.lockOnUnload,
     });
     updatePoolConcurrency(settings.maxConcurrency);
 
@@ -561,8 +592,6 @@ export default defineBackground(() => {
     }
   );
 
-  // Lock vault on unload
-  self.addEventListener('beforeunload', () => {
-    vault.lock();
-  });
+  // Note: beforeunload doesn't work in Service Workers (MV3)
+  // Vault state is persisted in chrome.storage.session instead
 });

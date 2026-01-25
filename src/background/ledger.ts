@@ -92,7 +92,8 @@ export class Ledger {
   async createBatch(
     operation: TaskOperation,
     accountId: string,
-    items: string[] // domains for create, zoneIds for delete/purge
+    items: string[], // domains for create, zoneIds for delete/purge
+    options?: { type?: 'full' | 'partial'; jumpStart?: boolean }
   ): Promise<string> {
     this.ensureOpen();
 
@@ -103,6 +104,7 @@ export class Ledger {
       id: batchId,
       operation,
       accountId,
+      options,
       totalCount: items.length,
       processedCount: 0,
       successCount: 0,

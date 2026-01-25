@@ -33,6 +33,15 @@
         <!-- Auth View -->
         <section class="view view--auth" data-view-content="auth">
           <form class="auth-form" data-form="auth">
+            <div class="auth-intro">
+              <p class="auth-intro__text">
+                Bulk zone operations for new Cloudflare accounts.
+              </p>
+              <p class="auth-intro__hint">
+                For redirects, TDS & domain management → <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
+              </p>
+            </div>
+
             <div class="form-group">
               <label for="cf-email">Cloudflare Email</label>
               <input
@@ -326,6 +335,16 @@
             </p>
           </div>
 
+          <!-- 301.st CTA -->
+          <div class="results-cta" data-results-cta hidden>
+            <p class="results-cta__text">
+              Set up redirects, TDS rules & more for your new domains
+            </p>
+            <a href="https://app.301.st" target="_blank" rel="noopener" class="btn btn--primary btn--block">
+              Open 301.st Dashboard →
+            </a>
+          </div>
+
           <!-- Failed Items -->
           <div class="results-section" data-results-failed hidden>
             <h3>Failed</h3>
@@ -353,6 +372,19 @@
           </div>
 
           <div class="settings-section">
+            <h3>Current Account</h3>
+            <div class="current-account">
+              <span class="current-account__email" data-current-email>Not connected</span>
+              <button class="btn btn--ghost btn--sm" data-action="switch-account">
+                Switch Account
+              </button>
+            </div>
+            <p class="form-hint">
+              Clear credentials to login with a different Cloudflare account.
+            </p>
+          </div>
+
+          <div class="settings-section">
             <h3>Security</h3>
             <div class="form-group">
               <label for="auto-lock-timeout">Auto-lock timeout</label>
@@ -364,11 +396,6 @@
                 <option value="60">60 minutes</option>
               </select>
             </div>
-
-            <label class="checkbox">
-              <input type="checkbox" name="rememberSession" checked />
-              <span>Remember for session</span>
-            </label>
 
             <label class="checkbox">
               <input type="checkbox" name="lockOnUnload" checked />
@@ -418,10 +445,19 @@
             <h3>About</h3>
             <p class="settings-about">
               <strong>Cloudflare Tools</strong> v0.1.0<br />
-              Free bulk operations for CF zones.<br /><br />
-              For advanced domain management, redirects and TDS — try
-              <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
+              Free bulk operations for new CF accounts.
             </p>
+            <div class="settings-promo">
+              <p class="settings-promo__title">
+                Need more? Try <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
+              </p>
+              <ul class="settings-promo__list">
+                <li>Edge Redirects — bulk 301/302 with &lt;50ms response</li>
+                <li>TDS — geo, device & bot filtering rules</li>
+                <li>Multi-account Cloudflare orchestration</li>
+                <li>Domain health monitoring & alerts</li>
+              </ul>
+            </div>
             <p class="settings-links">
               <a href="privacy.html" target="_blank">Privacy Policy</a>
             </p>
@@ -435,6 +471,78 @@
           Powered by <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
         </p>
       </footer>
+    </div>
+
+    <!-- ========================================================================
+         Dialogs
+         ======================================================================== -->
+
+    <!-- Confirm Dialog (reusable) -->
+    <div class="dialog dialog--danger" data-dialog="confirm" hidden>
+      <div class="dialog__overlay" data-dialog-close></div>
+      <div class="dialog__panel">
+        <header class="dialog__header">
+          <h2 class="dialog__title" data-dialog-title>Confirm</h2>
+          <button class="dialog__close" type="button" data-dialog-close aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </header>
+        <div class="dialog__body">
+          <p data-dialog-message>Are you sure?</p>
+        </div>
+        <footer class="dialog__footer">
+          <button class="btn btn--ghost" type="button" data-dialog-close>Cancel</button>
+          <button class="btn btn--danger" type="button" data-dialog-confirm>Confirm</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Alert Dialog -->
+    <div class="dialog dialog--info" data-dialog="alert" hidden>
+      <div class="dialog__overlay" data-dialog-close></div>
+      <div class="dialog__panel">
+        <header class="dialog__header">
+          <h2 class="dialog__title" data-dialog-title>Notice</h2>
+          <button class="dialog__close" type="button" data-dialog-close aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </header>
+        <div class="dialog__body">
+          <p data-dialog-message>Message</p>
+        </div>
+        <footer class="dialog__footer">
+          <button class="btn btn--primary" type="button" data-dialog-close>OK</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Prompt Dialog -->
+    <div class="dialog dialog--info" data-dialog="prompt" hidden>
+      <div class="dialog__overlay" data-dialog-close></div>
+      <div class="dialog__panel">
+        <header class="dialog__header">
+          <h2 class="dialog__title" data-dialog-title>Input</h2>
+          <button class="dialog__close" type="button" data-dialog-close aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </header>
+        <div class="dialog__body">
+          <p data-dialog-message>Enter value:</p>
+          <div class="dialog__input">
+            <input type="text" class="input" data-dialog-input />
+          </div>
+        </div>
+        <footer class="dialog__footer">
+          <button class="btn btn--ghost" type="button" data-dialog-close>Cancel</button>
+          <button class="btn btn--primary" type="button" data-dialog-confirm>OK</button>
+        </footer>
+      </div>
     </div>
 
     <script type="module" src="./main.ts"></script>

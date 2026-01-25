@@ -111,6 +111,24 @@
   border-top: 1px solid var(--border-subtle);
 }
 
+/* Auth intro */
+.auth-intro {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+.auth-intro__text {
+  margin: 0 0 var(--space-2);
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.auth-intro__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
 /* Auth form */
 .auth-form {
   max-width: 320px;
@@ -345,6 +363,22 @@
   color: var(--danger);
 }
 
+/* Results CTA */
+.results-cta {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), color-mix(in srgb, var(--primary) 5%, transparent));
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.results-cta__text {
+  margin: 0 0 var(--space-3);
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
 /* Settings */
 .settings-section {
   margin-bottom: var(--space-5);
@@ -378,7 +412,179 @@
   line-height: 1.6;
 }
 
+/* Current account */
+.current-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-2);
+}
+
+.current-account__email {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Settings promo */
+.settings-promo {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
+  border-radius: var(--radius);
+}
+
+.settings-promo__title {
+  margin: 0 0 var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.settings-promo__list {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
 .settings-links {
   margin-top: var(--space-3);
   font-size: 0.8125rem;
+}
+
+/* ============================================================================
+   Dialog
+   ============================================================================ */
+
+.dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.dialog[hidden] {
+  display: none;
+}
+
+.dialog__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.dialog__panel {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: dialogFadeIn 0.15s ease-out;
+}
+
+.dialog--danger .dialog__panel {
+  border-left: 4px solid var(--danger);
+}
+
+.dialog--warning .dialog__panel {
+  border-left: 4px solid var(--warning);
+}
+
+.dialog--info .dialog__panel {
+  border-left: 4px solid var(--primary);
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  gap: var(--space-3);
+}
+
+.dialog__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dialog__close {
+  padding: var(--space-1);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.dialog__close:hover {
+  color: var(--text);
+  background: var(--border-subtle);
+}
+
+.dialog__body {
+  padding: var(--space-4);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.dialog__body strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.dialog__input {
+  margin-top: var(--space-3);
+}
+
+.dialog__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--panel);
+}
+
+.dialog__footer .btn {
+  flex: 1;
 }

@@ -16,6 +16,14 @@
 
       <main class="popup__body">
         <section class="popup__section">
+          <!-- Account Selector -->
+          <div class="popup__account" hidden data-account-section>
+            <label for="popup-account" class="popup__label">Account</label>
+            <select id="popup-account" class="input" data-account-select>
+              <option value="">Select account...</option>
+            </select>
+          </div>
+
           <h2 class="popup__section-title">Quick Actions</h2>
           <div class="popup__actions">
             <button class="btn btn--primary btn--block" data-action="purge-all" disabled>

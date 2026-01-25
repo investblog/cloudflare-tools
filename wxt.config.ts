@@ -12,7 +12,10 @@ export default defineConfig({
     version: '0.1.0',
 
     permissions: ['storage', 'sidePanel'],
-    host_permissions: ['https://api.cloudflare.com/*'],
+    host_permissions: [
+      'https://api.cloudflare.com/*',
+      'https://dash.cloudflare.com/*',
+    ],
 
     icons: {
       16: 'icons/icon-16.png',

@@ -242,6 +242,7 @@ export interface Settings {
   autoLockTimeoutMinutes: number;
   maxConcurrency: number;
   enableDashboardButtons: boolean;
+  lockOnUnload: boolean;
 }
 
 export interface GetSettingsResponse {
@@ -251,6 +252,14 @@ export interface GetSettingsResponse {
 export interface UpdateSettingsRequest {
   type: 'UPDATE_SETTINGS';
   payload: Partial<Settings>;
+}
+
+export interface OpenSidePanelRequest {
+  type: 'OPEN_SIDE_PANEL';
+}
+
+export interface OpenSidePanelResponse {
+  opened: boolean;
 }
 
 export interface UpdateSettingsResponse {
@@ -312,7 +321,8 @@ export type RequestMessage =
   | GetFailedTasksRequest
   | GetIncompleteBatchesRequest
   | GetSettingsRequest
-  | UpdateSettingsRequest;
+  | UpdateSettingsRequest
+  | OpenSidePanelRequest;
 
 export type BackgroundEvent =
   | BatchProgressEvent
@@ -344,6 +354,7 @@ type ResponseMap = {
   GET_INCOMPLETE_BATCHES: GetIncompleteBatchesResponse;
   GET_SETTINGS: GetSettingsResponse;
   UPDATE_SETTINGS: UpdateSettingsResponse;
+  OPEN_SIDE_PANEL: OpenSidePanelResponse;
 };
 
 // ============================================================================

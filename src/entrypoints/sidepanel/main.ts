@@ -16,6 +16,169 @@ import type { BatchSummary } from '../../shared/types/tasks';
 import { parseDomains } from '../../shared/domains';
 
 // ============================================================================
+// Dialog System
+// ============================================================================
+
+interface DialogOptions {
+  title?: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'danger' | 'warning' | 'info';
+  inputType?: string;
+  inputValue?: string;
+}
+
+function showAlertDialog(message: string, title = 'Notice'): Promise<void> {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector('[data-dialog="alert"]') as HTMLElement;
+    if (!dialog) {
+      // Fallback to native alert
+      alert(message);
+      resolve();
+      return;
+    }
+
+    const titleEl = dialog.querySelector('[data-dialog-title]');
+    const messageEl = dialog.querySelector('[data-dialog-message]');
+
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.textContent = message;
+
+    dialog.hidden = false;
+
+    const handleClose = () => {
+      dialog.hidden = true;
+      cleanup();
+      resolve();
+    };
+
+    const cleanup = () => {
+      dialog.querySelectorAll('[data-dialog-close]').forEach((btn) => {
+        btn.removeEventListener('click', handleClose);
+      });
+    };
+
+    dialog.querySelectorAll('[data-dialog-close]').forEach((btn) => {
+      btn.addEventListener('click', handleClose);
+    });
+  });
+}
+
+function showConfirmDialog(options: DialogOptions): Promise<boolean> {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector('[data-dialog="confirm"]') as HTMLElement;
+    if (!dialog) {
+      // Fallback to native confirm
+      resolve(confirm(options.message));
+      return;
+    }
+
+    const titleEl = dialog.querySelector('[data-dialog-title]');
+    const messageEl = dialog.querySelector('[data-dialog-message]');
+    const confirmBtn = dialog.querySelector('[data-dialog-confirm]') as HTMLButtonElement;
+    const panel = dialog.querySelector('.dialog__panel') as HTMLElement;
+
+    if (titleEl) titleEl.textContent = options.title || 'Confirm';
+    if (messageEl) messageEl.textContent = options.message;
+    if (confirmBtn) confirmBtn.textContent = options.confirmText || 'Confirm';
+
+    // Update dialog type
+    dialog.className = `dialog dialog--${options.type || 'danger'}`;
+
+    // Update confirm button style
+    if (confirmBtn) {
+      confirmBtn.className = options.type === 'danger'
+        ? 'btn btn--danger'
+        : 'btn btn--primary';
+    }
+
+    dialog.hidden = false;
+
+    const handleConfirm = () => {
+      dialog.hidden = true;
+      cleanup();
+      resolve(true);
+    };
+
+    const handleCancel = () => {
+      dialog.hidden = true;
+      cleanup();
+      resolve(false);
+    };
+
+    const cleanup = () => {
+      confirmBtn?.removeEventListener('click', handleConfirm);
+      dialog.querySelectorAll('[data-dialog-close]').forEach((btn) => {
+        btn.removeEventListener('click', handleCancel);
+      });
+    };
+
+    confirmBtn?.addEventListener('click', handleConfirm);
+    dialog.querySelectorAll('[data-dialog-close]').forEach((btn) => {
+      btn.addEventListener('click', handleCancel);
+    });
+  });
+}
+
+function showPromptDialog(options: DialogOptions): Promise<string | null> {
+  return new Promise((resolve) => {
+    const dialog = document.querySelector('[data-dialog="prompt"]') as HTMLElement;
+    if (!dialog) {
+      // Fallback to native prompt
+      resolve(prompt(options.message, options.inputValue));
+      return;
+    }
+
+    const titleEl = dialog.querySelector('[data-dialog-title]');
+    const messageEl = dialog.querySelector('[data-dialog-message]');
+    const input = dialog.querySelector('[data-dialog-input]') as HTMLInputElement;
+    const confirmBtn = dialog.querySelector('[data-dialog-confirm]') as HTMLButtonElement;
+
+    if (titleEl) titleEl.textContent = options.title || 'Input';
+    if (messageEl) messageEl.textContent = options.message;
+    if (input) {
+      input.type = options.inputType || 'text';
+      input.value = options.inputValue || '';
+    }
+
+    dialog.hidden = false;
+    input?.focus();
+
+    const handleConfirm = () => {
+      dialog.hidden = true;
+      cleanup();
+      resolve(input?.value || null);
+    };
+
+    const handleCancel = () => {
+      dialog.hidden = true;
+      cleanup();
+      resolve(null);
+    };
+
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') handleConfirm();
+      if (e.key === 'Escape') handleCancel();
+    };
+
+    const cleanup = () => {
+      confirmBtn?.removeEventListener('click', handleConfirm);
+      input?.removeEventListener('keydown', handleKeydown);
+      dialog.querySelectorAll('[data-dialog-close]').forEach((btn) => {
+        btn.removeEventListener('click', handleCancel);
+      });
+    };
+
+    confirmBtn?.addEventListener('click', handleConfirm);
+    input?.addEventListener('keydown', handleKeydown);
+    dialog.querySelectorAll('[data-dialog-close]').forEach((btn) => {
+      btn.addEventListener('click', handleCancel);
+    });
+  });
+}
+
+// ============================================================================
 // Error Handling
 // ============================================================================
 
@@ -91,11 +254,21 @@ function showView(viewName: ViewName): void {
   }
 }
 
+let currentEmail: string | undefined;
+
 function updateStatus(connected: boolean, email?: string): void {
+  currentEmail = email;
+
   const statusBadge = document.querySelector('.status-badge');
   if (statusBadge) {
     statusBadge.setAttribute('data-status', connected ? 'connected' : 'disconnected');
     statusBadge.textContent = connected ? (email || 'Connected') : 'Disconnected';
+  }
+
+  // Update current account in settings
+  const emailEl = document.querySelector('[data-current-email]');
+  if (emailEl) {
+    emailEl.textContent = connected && email ? email : 'Not connected';
   }
 }
 
@@ -193,13 +366,13 @@ function initCreateView(): void {
   checkBtn.addEventListener('click', async () => {
     const accountId = accountSelect.value;
     if (!accountId) {
-      alert('Please select an account');
+      await showAlertDialog('Please select an account', 'Account Required');
       return;
     }
 
     const { domains, duplicates, invalid } = parseDomains(textarea.value);
     if (domains.length === 0 && duplicates.length === 0 && invalid.length === 0) {
-      alert('No domains found');
+      await showAlertDialog('No domains found in the input', 'No Domains');
       return;
     }
 
@@ -223,7 +396,7 @@ function initCreateView(): void {
     } catch (error) {
       if (!handleVaultLockedError(error)) {
         const msg = error instanceof Error ? error.message : 'Check failed';
-        alert(msg);
+        await showAlertDialog(msg, 'Preflight Error');
       }
     } finally {
       setButtonLoading(checkBtn, false);
@@ -234,7 +407,7 @@ function initCreateView(): void {
   startBtn.addEventListener('click', async () => {
     const accountId = accountSelect.value;
     if (!accountId) {
-      alert('Please select an account');
+      await showAlertDialog('Please select an account', 'Account Required');
       return;
     }
 
@@ -250,7 +423,7 @@ function initCreateView(): void {
     }
 
     if (domainsToCreate.length === 0) {
-      alert('No domains to create');
+      await showAlertDialog('No domains to create. Run preflight check first.', 'No Domains');
       return;
     }
 
@@ -267,6 +440,10 @@ function initCreateView(): void {
           operation: 'create',
           accountId,
           domains: domainsToCreate,
+          options: {
+            type: zoneType as 'full' | 'partial',
+            jumpStart,
+          },
         },
       });
 
@@ -278,7 +455,7 @@ function initCreateView(): void {
       setButtonLoading(startBtn, false);
       if (!handleVaultLockedError(error)) {
         const msg = error instanceof Error ? error.message : 'Failed to start batch';
-        alert(msg);
+        await showAlertDialog(msg, 'Error');
       }
     }
   });
@@ -386,9 +563,12 @@ function initDeleteView(): void {
     deleteBtn.addEventListener('click', async () => {
       if (selectedDeleteZones.size === 0) return;
 
-      const confirmed = confirm(
-        `Are you sure you want to delete ${selectedDeleteZones.size} zone(s)? This action cannot be undone.`
-      );
+      const confirmed = await showConfirmDialog({
+        title: 'Delete Zones',
+        message: `Are you sure you want to delete ${selectedDeleteZones.size} zone(s)? This action cannot be undone.`,
+        confirmText: 'Delete',
+        type: 'danger',
+      });
       if (!confirmed) return;
 
       const accountId = accountSelect.value;
@@ -412,7 +592,7 @@ function initDeleteView(): void {
         setButtonLoading(deleteBtn, false);
         if (!handleVaultLockedError(error)) {
           const msg = error instanceof Error ? error.message : 'Failed to start delete';
-          alert(msg);
+          await showAlertDialog(msg, 'Error');
         }
       }
     });
@@ -485,9 +665,12 @@ function initPurgeView(): void {
     purgeBtn.addEventListener('click', async () => {
       if (selectedPurgeZones.size === 0) return;
 
-      const confirmed = confirm(
-        `Are you sure you want to purge cache for ${selectedPurgeZones.size} zone(s)?`
-      );
+      const confirmed = await showConfirmDialog({
+        title: 'Purge Cache',
+        message: `Are you sure you want to purge cache for ${selectedPurgeZones.size} zone(s)?`,
+        confirmText: 'Purge',
+        type: 'warning',
+      });
       if (!confirmed) return;
 
       const accountId = accountSelect.value;
@@ -511,7 +694,7 @@ function initPurgeView(): void {
         setButtonLoading(purgeBtn, false);
         if (!handleVaultLockedError(error)) {
           const msg = error instanceof Error ? error.message : 'Failed to start purge';
-          alert(msg);
+          await showAlertDialog(msg, 'Error');
         }
       }
     });
@@ -535,6 +718,7 @@ function showProgressView(title: string, total: number): void {
     failed: 0,
     skipped: 0,
     blocked: 0,
+    etaMs: null,
   });
 }
 
@@ -622,7 +806,12 @@ function initProgressView(): void {
   cancelBtn?.addEventListener('click', async () => {
     if (!currentBatchId) return;
 
-    const confirmed = confirm('Are you sure you want to cancel?');
+    const confirmed = await showConfirmDialog({
+      title: 'Cancel Operation',
+      message: 'Are you sure you want to cancel? Progress will be lost.',
+      confirmText: 'Cancel Operation',
+      type: 'warning',
+    });
     if (!confirmed) return;
 
     try {
@@ -644,7 +833,7 @@ function initProgressView(): void {
 
 let lastBatchSummary: BatchSummary | null = null;
 
-function showResultsView(summary: BatchSummary): void {
+function showResultsView(summary: BatchSummary, operation?: string): void {
   lastBatchSummary = summary;
   showView('results');
 
@@ -673,6 +862,12 @@ function showResultsView(summary: BatchSummary): void {
     if (failedSection) failedSection.hidden = true;
     if (retryBtn) retryBtn.hidden = true;
     if (exportBtn) exportBtn.hidden = true;
+  }
+
+  // Show 301.st CTA when zones were created successfully
+  const ctaEl = document.querySelector('[data-results-cta]') as HTMLElement;
+  if (ctaEl) {
+    ctaEl.hidden = summary.success === 0;
   }
 }
 
@@ -724,7 +919,7 @@ function initResultsView(): void {
       showProgressView('Retrying failed...', count);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Retry failed';
-      alert(msg);
+      await showAlertDialog(msg, 'Retry Error');
       setButtonLoading(retryBtn, false);
     }
   });
@@ -803,6 +998,12 @@ async function loadSettings(): Promise<void> {
     if (dashboardCheckbox) {
       dashboardCheckbox.checked = settings.enableDashboardButtons;
     }
+
+    // Lock on unload
+    const lockOnUnloadCheckbox = document.querySelector('input[name="lockOnUnload"]') as HTMLInputElement;
+    if (lockOnUnloadCheckbox) {
+      lockOnUnloadCheckbox.checked = settings.lockOnUnload;
+    }
   } catch (error) {
     console.error('[CF Tools] Failed to load settings:', error);
   }
@@ -812,6 +1013,7 @@ function initSettingsView(): void {
   const timeoutSelect = document.getElementById('auto-lock-timeout') as HTMLSelectElement;
   const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
   const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
+  const lockOnUnloadCheckbox = document.querySelector('input[name="lockOnUnload"]') as HTMLInputElement;
   const clearDataBtn = document.querySelector('[data-action="clear-all-data"]') as HTMLButtonElement;
   const changePasswordBtn = document.querySelector('[data-action="change-password"]') as HTMLButtonElement;
 
@@ -827,12 +1029,16 @@ function initSettingsView(): void {
     if (dashboardCheckbox) {
       settings.enableDashboardButtons = dashboardCheckbox.checked;
     }
+    if (lockOnUnloadCheckbox) {
+      settings.lockOnUnload = lockOnUnloadCheckbox.checked;
+    }
 
     try {
       await sendMessage({
         type: 'UPDATE_SETTINGS',
         payload: settings as Settings,
       });
+      console.log('[CF Tools] Settings saved:', settings);
     } catch (error) {
       console.error('[CF Tools] Failed to save settings:', error);
     }
@@ -841,11 +1047,15 @@ function initSettingsView(): void {
   timeoutSelect?.addEventListener('change', saveSettings);
   concurrencySelect?.addEventListener('change', saveSettings);
   dashboardCheckbox?.addEventListener('change', saveSettings);
+  lockOnUnloadCheckbox?.addEventListener('change', saveSettings);
 
   clearDataBtn?.addEventListener('click', async () => {
-    const confirmed = confirm(
-      'This will remove all stored credentials and settings. Are you sure?'
-    );
+    const confirmed = await showConfirmDialog({
+      title: 'Clear All Data',
+      message: 'This will remove all stored credentials and settings. Are you sure?',
+      confirmText: 'Clear Data',
+      type: 'danger',
+    });
     if (!confirmed) return;
 
     try {
@@ -855,23 +1065,57 @@ function initSettingsView(): void {
       updateStatus(false);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Clear failed';
-      alert(msg);
+      await showAlertDialog(msg, 'Error');
+    }
+  });
+
+  // Switch Account button
+  const switchAccountBtn = document.querySelector('[data-action="switch-account"]');
+  switchAccountBtn?.addEventListener('click', async () => {
+    const confirmed = await showConfirmDialog({
+      title: 'Switch Account',
+      message: 'This will clear your current credentials. You can then login with a different Cloudflare account. Continue?',
+      confirmText: 'Switch',
+      type: 'warning',
+    });
+    if (!confirmed) return;
+
+    try {
+      await sendMessage({ type: 'VAULT_CLEAR' });
+      isUnlocked = false;
+      showView('auth');
+      updateStatus(false);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed to switch account';
+      await showAlertDialog(msg, 'Error');
     }
   });
 
   changePasswordBtn?.addEventListener('click', async () => {
-    const oldPassword = prompt('Enter current master password:');
+    const oldPassword = await showPromptDialog({
+      title: 'Change Password',
+      message: 'Enter current master password:',
+      inputType: 'password',
+    });
     if (!oldPassword) return;
 
-    const newPassword = prompt('Enter new master password (min 8 characters):');
+    const newPassword = await showPromptDialog({
+      title: 'Change Password',
+      message: 'Enter new master password (min 8 characters):',
+      inputType: 'password',
+    });
     if (!newPassword || newPassword.length < 8) {
-      alert('Password must be at least 8 characters');
+      await showAlertDialog('Password must be at least 8 characters', 'Invalid Password');
       return;
     }
 
-    const confirmPassword = prompt('Confirm new master password:');
+    const confirmPassword = await showPromptDialog({
+      title: 'Change Password',
+      message: 'Confirm new master password:',
+      inputType: 'password',
+    });
     if (newPassword !== confirmPassword) {
-      alert('Passwords do not match');
+      await showAlertDialog('Passwords do not match', 'Mismatch');
       return;
     }
 
@@ -880,10 +1124,10 @@ function initSettingsView(): void {
         type: 'VAULT_CHANGE_PASSWORD',
         payload: { oldPassword, newPassword },
       });
-      alert('Password changed successfully');
+      await showAlertDialog('Password changed successfully', 'Success');
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Change failed';
-      alert(msg);
+      await showAlertDialog(msg, 'Error');
     }
   });
 }
@@ -897,9 +1141,12 @@ function initResetVault(): void {
   resetLink?.addEventListener('click', async (e) => {
     e.preventDefault();
 
-    const confirmed = confirm(
-      'This will delete your saved credentials. You will need to re-enter your Cloudflare email and API key. Continue?'
-    );
+    const confirmed = await showConfirmDialog({
+      title: 'Reset Credentials',
+      message: 'This will delete your saved credentials. You will need to re-enter your Cloudflare email and API key. Continue?',
+      confirmText: 'Reset',
+      type: 'danger',
+    });
     if (!confirmed) return;
 
     try {

@@ -45,7 +45,7 @@ interface StoredVault {
 
 const STORAGE_KEY_VAULT = 'cf_vault';
 const STORAGE_KEY_CONFIG = 'cf_vault_config';
-const STORAGE_KEY_LOCK_STATE = 'cf_vault_locked';
+const STORAGE_KEY_SESSION = 'cf_vault_session'; // Session storage for SW restart persistence
 
 const DEFAULT_CONFIG: VaultConfig = {
   autoLockTimeoutMs: 15 * 60 * 1000, // 15 minutes
@@ -71,9 +71,10 @@ export class Vault {
 
   /**
    * Initialize vault and load config from storage.
+   * Restores unlock state from session storage if SW was restarted.
    */
   async init(): Promise<void> {
-    // Load config
+    // Load config and vault from local storage
     const stored = await chrome.storage.local.get([STORAGE_KEY_CONFIG, STORAGE_KEY_VAULT]);
 
     if (stored[STORAGE_KEY_CONFIG]) {
@@ -84,9 +85,30 @@ export class Vault {
       this.storedVault = stored[STORAGE_KEY_VAULT];
     }
 
-    // Set up lock state listener
-    if (this.config.lockOnUnload) {
-      self.addEventListener('beforeunload', () => this.lock());
+    // Try to restore unlock state from session storage (survives SW restart)
+    try {
+      const session = await chrome.storage.session.get(STORAGE_KEY_SESSION);
+      if (session[STORAGE_KEY_SESSION]) {
+        const { email, apiKey, derivedKeyHex, salt } = session[STORAGE_KEY_SESSION];
+
+        // Restore credentials
+        this.decryptedCredentials = { email, apiKey };
+
+        // Restore derived key
+        const keyBytes = this.hexToArray(derivedKeyHex);
+        this.derivedKey = await crypto.subtle.importKey(
+          'raw',
+          keyBytes,
+          { name: 'AES-GCM' },
+          false,
+          ['encrypt', 'decrypt']
+        );
+
+        console.log('[Vault] Restored unlock state from session');
+        this.resetAutoLockTimer();
+      }
+    } catch (error) {
+      console.log('[Vault] No session to restore:', error);
     }
   }
 
@@ -138,11 +160,13 @@ export class Vault {
 
     await chrome.storage.local.set({
       [STORAGE_KEY_VAULT]: this.storedVault,
-      [STORAGE_KEY_LOCK_STATE]: false,
     });
 
     // Keep decrypted credentials in memory
     this.decryptedCredentials = credentials;
+
+    // Save to session storage for SW restart persistence
+    await this.saveSession(derivedKeyBytes);
 
     // Start auto-lock timer
     this.resetAutoLockTimer();
@@ -181,7 +205,8 @@ export class Vault {
         apiKey,
       };
 
-      await chrome.storage.local.set({ [STORAGE_KEY_LOCK_STATE]: false });
+      // Save to session storage for SW restart persistence
+      await this.saveSession(derivedKeyBytes);
 
       this.resetAutoLockTimer();
       return true;
@@ -194,7 +219,7 @@ export class Vault {
   }
 
   /**
-   * Lock vault - clear sensitive data from memory.
+   * Lock vault - clear sensitive data from memory and session.
    */
   async lock(): Promise<void> {
     this.derivedKey = null;
@@ -205,7 +230,8 @@ export class Vault {
       this.autoLockTimer = null;
     }
 
-    await chrome.storage.local.set({ [STORAGE_KEY_LOCK_STATE]: true });
+    // Clear session storage
+    await chrome.storage.session.remove(STORAGE_KEY_SESSION);
   }
 
   /**
@@ -282,7 +308,6 @@ export class Vault {
     await chrome.storage.local.remove([
       STORAGE_KEY_VAULT,
       STORAGE_KEY_CONFIG,
-      STORAGE_KEY_LOCK_STATE,
     ]);
   }
 
@@ -401,6 +426,42 @@ export class Vault {
       array[i] = binary.charCodeAt(i);
     }
     return array;
+  }
+
+  /**
+   * Convert ArrayBuffer to hex string.
+   */
+  private arrayToHex(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    return Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  /**
+   * Convert hex string to Uint8Array.
+   */
+  private hexToArray(hex: string): Uint8Array {
+    const array = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+      array[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+    }
+    return array;
+  }
+
+  /**
+   * Save unlock state to session storage (survives SW restart).
+   */
+  private async saveSession(derivedKeyBytes: ArrayBuffer): Promise<void> {
+    if (!this.decryptedCredentials) return;
+
+    await chrome.storage.session.set({
+      [STORAGE_KEY_SESSION]: {
+        email: this.decryptedCredentials.email,
+        apiKey: this.decryptedCredentials.apiKey,
+        derivedKeyHex: this.arrayToHex(derivedKeyBytes),
+      },
+    });
   }
 }
 
