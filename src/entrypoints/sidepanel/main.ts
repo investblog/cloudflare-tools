@@ -16,6 +16,26 @@ import type { BatchSummary } from '../../shared/types/tasks';
 import { parseDomains } from '../../shared/domains';
 
 // ============================================================================
+// Error Handling
+// ============================================================================
+
+/**
+ * Check if error indicates vault is locked and handle it.
+ * Returns true if the error was a vault locked error.
+ */
+function handleVaultLockedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.includes('VAULT_LOCKED') || message.includes('Vault is locked')) {
+    console.log('[CF Tools] Vault locked, showing unlock view');
+    isUnlocked = false;
+    showView('unlock');
+    updateStatus(false);
+    return true;
+  }
+  return false;
+}
+
+// ============================================================================
 // State
 // ============================================================================
 
@@ -201,8 +221,10 @@ function initCreateView(): void {
       preflightResults = allResults;
       updatePreflightDisplay(allResults);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Check failed';
-      alert(msg);
+      if (!handleVaultLockedError(error)) {
+        const msg = error instanceof Error ? error.message : 'Check failed';
+        alert(msg);
+      }
     } finally {
       setButtonLoading(checkBtn, false);
     }
@@ -252,8 +274,10 @@ function initCreateView(): void {
       batchStartTime = Date.now();
       showProgressView('Creating zones...', domainsToCreate.length);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Failed to start batch';
-      alert(msg);
+      if (!handleVaultLockedError(error)) {
+        const msg = error instanceof Error ? error.message : 'Failed to start batch';
+        alert(msg);
+      }
       setButtonLoading(startBtn, false);
     }
   });
@@ -290,7 +314,9 @@ async function loadZonesForDelete(accountId: string, page = 1): Promise<void> {
     if (emptyEl) emptyEl.hidden = zones.length > 0;
   } catch (error) {
     if (loadingEl) loadingEl.hidden = true;
-    console.error('[CF Tools] Failed to load zones:', error);
+    if (!handleVaultLockedError(error)) {
+      console.error('[CF Tools] Failed to load zones:', error);
+    }
   }
 }
 
@@ -381,8 +407,10 @@ function initDeleteView(): void {
         batchStartTime = Date.now();
         showProgressView('Deleting zones...', selectedDeleteZones.size);
       } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Failed to start delete';
-        alert(msg);
+        if (!handleVaultLockedError(error)) {
+          const msg = error instanceof Error ? error.message : 'Failed to start delete';
+          alert(msg);
+        }
         setButtonLoading(deleteBtn, false);
       }
     });
@@ -420,7 +448,9 @@ async function loadZonesForPurge(accountId: string, page = 1): Promise<void> {
     if (emptyEl) emptyEl.hidden = zones.length > 0;
   } catch (error) {
     if (loadingEl) loadingEl.hidden = true;
-    console.error('[CF Tools] Failed to load zones:', error);
+    if (!handleVaultLockedError(error)) {
+      console.error('[CF Tools] Failed to load zones:', error);
+    }
   }
 }
 
@@ -475,8 +505,10 @@ function initPurgeView(): void {
         batchStartTime = Date.now();
         showProgressView('Purging cache...', selectedPurgeZones.size);
       } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Failed to start purge';
-        alert(msg);
+        if (!handleVaultLockedError(error)) {
+          const msg = error instanceof Error ? error.message : 'Failed to start purge';
+          alert(msg);
+        }
         setButtonLoading(purgeBtn, false);
       }
     });
