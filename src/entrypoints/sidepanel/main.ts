@@ -272,13 +272,14 @@ function initCreateView(): void {
 
       currentBatchId = batchId;
       batchStartTime = Date.now();
+      setButtonLoading(startBtn, false);
       showProgressView('Creating zones...', domainsToCreate.length);
     } catch (error) {
+      setButtonLoading(startBtn, false);
       if (!handleVaultLockedError(error)) {
         const msg = error instanceof Error ? error.message : 'Failed to start batch';
         alert(msg);
       }
-      setButtonLoading(startBtn, false);
     }
   });
 }
@@ -405,13 +406,14 @@ function initDeleteView(): void {
 
         currentBatchId = batchId;
         batchStartTime = Date.now();
+        setButtonLoading(deleteBtn, false);
         showProgressView('Deleting zones...', selectedDeleteZones.size);
       } catch (error) {
+        setButtonLoading(deleteBtn, false);
         if (!handleVaultLockedError(error)) {
           const msg = error instanceof Error ? error.message : 'Failed to start delete';
           alert(msg);
         }
-        setButtonLoading(deleteBtn, false);
       }
     });
   }
@@ -503,13 +505,14 @@ function initPurgeView(): void {
 
         currentBatchId = batchId;
         batchStartTime = Date.now();
+        setButtonLoading(purgeBtn, false);
         showProgressView('Purging cache...', selectedPurgeZones.size);
       } catch (error) {
+        setButtonLoading(purgeBtn, false);
         if (!handleVaultLockedError(error)) {
           const msg = error instanceof Error ? error.message : 'Failed to start purge';
           alert(msg);
         }
-        setButtonLoading(purgeBtn, false);
       }
     });
   }
