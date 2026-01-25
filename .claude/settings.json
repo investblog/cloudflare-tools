@@ -1,0 +1,35 @@
+{
+  "project_type": "browser_extension",
+  "framework": "wxt",
+  "language": "typescript",
+  "style": "vanilla_dom",
+  "testing": {
+    "unit": false,
+    "e2e": false
+  },
+  "conventions": {
+    "naming": {
+      "files": "kebab-case",
+      "types": "PascalCase",
+      "functions": "camelCase",
+      "constants": "SCREAMING_SNAKE_CASE"
+    },
+    "imports": {
+      "prefer_type_imports": true,
+      "use_path_aliases": true
+    }
+  },
+  "key_files": {
+    "spec": "SPEC.md",
+    "types": "src/shared/types/index.ts",
+    "background": "src/entrypoints/background.ts",
+    "panel": "src/entrypoints/sidepanel/main.ts"
+  },
+  "related_projects": [
+    {
+      "name": "301-ui",
+      "path": "../301-ui",
+      "relation": "design_system_source"
+    }
+  ]
+}
