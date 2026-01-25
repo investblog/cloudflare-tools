@@ -5,8 +5,15 @@
  */
 
 import { sendMessage } from '../../shared/messaging/protocol';
-import type { CFAccount } from '../../shared/types/api';
-import { countDomains } from '../../shared/domains';
+import type {
+  PreflightResult,
+  BatchProgressEvent,
+  BatchCompletedEvent,
+  Settings,
+} from '../../shared/messaging/protocol';
+import type { CFAccount, CFZone } from '../../shared/types/api';
+import type { BatchSummary } from '../../shared/types/tasks';
+import { parseDomains } from '../../shared/domains';
 
 // ============================================================================
 // State
@@ -14,6 +21,18 @@ import { countDomains } from '../../shared/domains';
 
 let currentAccounts: CFAccount[] = [];
 let isUnlocked = false;
+let currentBatchId: string | null = null;
+let batchStartTime: number | null = null;
+let preflightResults: PreflightResult[] = [];
+
+// Delete/Purge view state
+let deleteZones: CFZone[] = [];
+let purgeZones: CFZone[] = [];
+let selectedDeleteZones = new Set<string>();
+let selectedPurgeZones = new Set<string>();
+let deleteCurrentPage = 1;
+let purgeCurrentPage = 1;
+const ZONES_PER_PAGE = 50;
 
 // ============================================================================
 // View Management
@@ -39,10 +58,10 @@ function showView(viewName: ViewName): void {
     panel.setAttribute('data-view', viewName);
   }
 
-  // Show/hide navigation (hide for auth, unlock, progress)
+  // Show/hide navigation (hide for auth, unlock, progress, results)
   const nav = document.querySelector('.panel__nav');
   if (nav) {
-    (nav as HTMLElement).hidden = ['auth', 'unlock', 'progress'].includes(viewName);
+    (nav as HTMLElement).hidden = ['auth', 'unlock', 'progress', 'results'].includes(viewName);
   }
 
   // Show/hide lock button
@@ -105,6 +124,761 @@ function setButtonLoading(button: HTMLButtonElement, loading: boolean): void {
 }
 
 // ============================================================================
+// Create View
+// ============================================================================
+
+function updatePreflightDisplay(results: PreflightResult[]): void {
+  const preflightEl = document.querySelector('[data-preflight]') as HTMLElement;
+  if (!preflightEl) return;
+
+  const counts = {
+    'will-create': 0,
+    'exists': 0,
+    'invalid': 0,
+    'duplicate': 0,
+  };
+
+  results.forEach((r) => {
+    if (r.status in counts) {
+      counts[r.status as keyof typeof counts]++;
+    }
+  });
+
+  // Update badges
+  Object.entries(counts).forEach(([status, count]) => {
+    const badge = preflightEl.querySelector(`[data-count="${status}"]`);
+    if (badge) {
+      badge.textContent = String(count);
+    }
+  });
+
+  preflightEl.hidden = false;
+
+  // Enable start button if there are domains to create
+  const startBtn = document.querySelector('[data-action="start-create"]') as HTMLButtonElement;
+  if (startBtn) {
+    startBtn.disabled = counts['will-create'] === 0;
+  }
+}
+
+function initCreateView(): void {
+  const checkBtn = document.querySelector('[data-action="check-first"]') as HTMLButtonElement;
+  const startBtn = document.querySelector('[data-action="start-create"]') as HTMLButtonElement;
+  const textarea = document.getElementById('domains-input') as HTMLTextAreaElement;
+  const accountSelect = document.getElementById('account-select') as HTMLSelectElement;
+
+  if (!checkBtn || !startBtn || !textarea || !accountSelect) return;
+
+  // Check First button
+  checkBtn.addEventListener('click', async () => {
+    const accountId = accountSelect.value;
+    if (!accountId) {
+      alert('Please select an account');
+      return;
+    }
+
+    const { domains, duplicates, invalid } = parseDomains(textarea.value);
+    if (domains.length === 0 && duplicates.length === 0 && invalid.length === 0) {
+      alert('No domains found');
+      return;
+    }
+
+    setButtonLoading(checkBtn, true);
+
+    try {
+      const { results } = await sendMessage({
+        type: 'CHECK_PREFLIGHT',
+        payload: { domains, accountId },
+      });
+
+      // Add local duplicates and invalid
+      const allResults: PreflightResult[] = [
+        ...results,
+        ...duplicates.map((d) => ({ domain: d, status: 'duplicate' as const })),
+        ...invalid.map((d) => ({ domain: d, status: 'invalid' as const })),
+      ];
+
+      preflightResults = allResults;
+      updatePreflightDisplay(allResults);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Check failed';
+      alert(msg);
+    } finally {
+      setButtonLoading(checkBtn, false);
+    }
+  });
+
+  // Start button
+  startBtn.addEventListener('click', async () => {
+    const accountId = accountSelect.value;
+    if (!accountId) {
+      alert('Please select an account');
+      return;
+    }
+
+    // Get domains to create (from preflight or parse fresh)
+    let domainsToCreate: string[];
+    if (preflightResults.length > 0) {
+      domainsToCreate = preflightResults
+        .filter((r) => r.status === 'will-create')
+        .map((r) => r.domain);
+    } else {
+      const { domains } = parseDomains(textarea.value);
+      domainsToCreate = domains;
+    }
+
+    if (domainsToCreate.length === 0) {
+      alert('No domains to create');
+      return;
+    }
+
+    // Get zone settings
+    const jumpStart = (document.querySelector('input[name="jumpStart"]') as HTMLInputElement)?.checked ?? true;
+    const zoneType = (document.getElementById('zone-type') as HTMLSelectElement)?.value || 'full';
+
+    setButtonLoading(startBtn, true);
+
+    try {
+      const { batchId } = await sendMessage({
+        type: 'START_BATCH',
+        payload: {
+          operation: 'create',
+          accountId,
+          domains: domainsToCreate,
+        },
+      });
+
+      currentBatchId = batchId;
+      batchStartTime = Date.now();
+      showProgressView('Creating zones...', domainsToCreate.length);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed to start batch';
+      alert(msg);
+      setButtonLoading(startBtn, false);
+    }
+  });
+}
+
+// ============================================================================
+// Delete View
+// ============================================================================
+
+async function loadZonesForDelete(accountId: string, page = 1): Promise<void> {
+  const zoneList = document.querySelector('[data-view-content="delete"] [data-zone-list]') as HTMLElement;
+  const loadingEl = zoneList?.querySelector('[data-loading]') as HTMLElement;
+  const emptyEl = zoneList?.querySelector('[data-empty]') as HTMLElement;
+
+  if (!zoneList) return;
+
+  if (loadingEl) loadingEl.hidden = false;
+  if (emptyEl) emptyEl.hidden = true;
+
+  try {
+    const { zones, pagination } = await sendMessage({
+      type: 'GET_ZONES',
+      payload: { accountId, page, perPage: ZONES_PER_PAGE },
+    });
+
+    deleteZones = zones;
+    deleteCurrentPage = page;
+    selectedDeleteZones.clear();
+
+    renderZoneList(zoneList, zones, selectedDeleteZones, 'delete');
+    updateDeleteSelectionCount();
+
+    if (loadingEl) loadingEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = zones.length > 0;
+  } catch (error) {
+    if (loadingEl) loadingEl.hidden = true;
+    console.error('[CF Tools] Failed to load zones:', error);
+  }
+}
+
+function renderZoneList(
+  container: HTMLElement,
+  zones: CFZone[],
+  selected: Set<string>,
+  prefix: string
+): void {
+  // Remove existing zone items
+  container.querySelectorAll('.zone-item').forEach((el) => el.remove());
+
+  zones.forEach((zone) => {
+    const item = document.createElement('label');
+    item.className = 'zone-item';
+    item.innerHTML = `
+      <input type="checkbox" class="zone-checkbox" data-zone-id="${zone.id}" ${selected.has(zone.id) ? 'checked' : ''} />
+      <span class="zone-name">${zone.name}</span>
+      <span class="zone-status" data-status="${zone.status}">${zone.status}</span>
+    `;
+
+    const checkbox = item.querySelector('input') as HTMLInputElement;
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        selected.add(zone.id);
+      } else {
+        selected.delete(zone.id);
+      }
+      if (prefix === 'delete') {
+        updateDeleteSelectionCount();
+      } else {
+        updatePurgeSelectionCount();
+      }
+    });
+
+    container.appendChild(item);
+  });
+}
+
+function updateDeleteSelectionCount(): void {
+  const countEl = document.querySelector('[data-view-content="delete"] [data-selected-count]');
+  const deleteBtn = document.querySelector('[data-action="start-delete"]') as HTMLButtonElement;
+
+  if (countEl) {
+    countEl.textContent = String(selectedDeleteZones.size);
+  }
+  if (deleteBtn) {
+    deleteBtn.disabled = selectedDeleteZones.size === 0;
+  }
+}
+
+function initDeleteView(): void {
+  const accountSelect = document.getElementById('delete-account-select') as HTMLSelectElement;
+  const deleteBtn = document.querySelector('[data-action="start-delete"]') as HTMLButtonElement;
+
+  if (!accountSelect) return;
+
+  accountSelect.addEventListener('change', () => {
+    const accountId = accountSelect.value;
+    if (accountId) {
+      loadZonesForDelete(accountId);
+    }
+  });
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (selectedDeleteZones.size === 0) return;
+
+      const confirmed = confirm(
+        `Are you sure you want to delete ${selectedDeleteZones.size} zone(s)? This action cannot be undone.`
+      );
+      if (!confirmed) return;
+
+      const accountId = accountSelect.value;
+      setButtonLoading(deleteBtn, true);
+
+      try {
+        const { batchId } = await sendMessage({
+          type: 'START_BATCH',
+          payload: {
+            operation: 'delete',
+            accountId,
+            zoneIds: Array.from(selectedDeleteZones),
+          },
+        });
+
+        currentBatchId = batchId;
+        batchStartTime = Date.now();
+        showProgressView('Deleting zones...', selectedDeleteZones.size);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Failed to start delete';
+        alert(msg);
+        setButtonLoading(deleteBtn, false);
+      }
+    });
+  }
+}
+
+// ============================================================================
+// Purge View
+// ============================================================================
+
+async function loadZonesForPurge(accountId: string, page = 1): Promise<void> {
+  const zoneList = document.querySelector('[data-view-content="purge"] [data-zone-list]') as HTMLElement;
+  const loadingEl = zoneList?.querySelector('[data-loading]') as HTMLElement;
+  const emptyEl = zoneList?.querySelector('[data-empty]') as HTMLElement;
+
+  if (!zoneList) return;
+
+  if (loadingEl) loadingEl.hidden = false;
+  if (emptyEl) emptyEl.hidden = true;
+
+  try {
+    const { zones, pagination } = await sendMessage({
+      type: 'GET_ZONES',
+      payload: { accountId, page, perPage: ZONES_PER_PAGE },
+    });
+
+    purgeZones = zones;
+    purgeCurrentPage = page;
+    selectedPurgeZones.clear();
+
+    renderZoneList(zoneList, zones, selectedPurgeZones, 'purge');
+    updatePurgeSelectionCount();
+
+    if (loadingEl) loadingEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = zones.length > 0;
+  } catch (error) {
+    if (loadingEl) loadingEl.hidden = true;
+    console.error('[CF Tools] Failed to load zones:', error);
+  }
+}
+
+function updatePurgeSelectionCount(): void {
+  const countEl = document.querySelector('[data-view-content="purge"] [data-selected-count]');
+  const purgeBtn = document.querySelector('[data-action="start-purge"]') as HTMLButtonElement;
+
+  if (countEl) {
+    countEl.textContent = String(selectedPurgeZones.size);
+  }
+  if (purgeBtn) {
+    purgeBtn.disabled = selectedPurgeZones.size === 0;
+  }
+}
+
+function initPurgeView(): void {
+  const accountSelect = document.getElementById('purge-account-select') as HTMLSelectElement;
+  const purgeBtn = document.querySelector('[data-action="start-purge"]') as HTMLButtonElement;
+
+  if (!accountSelect) return;
+
+  accountSelect.addEventListener('change', () => {
+    const accountId = accountSelect.value;
+    if (accountId) {
+      loadZonesForPurge(accountId);
+    }
+  });
+
+  if (purgeBtn) {
+    purgeBtn.addEventListener('click', async () => {
+      if (selectedPurgeZones.size === 0) return;
+
+      const confirmed = confirm(
+        `Are you sure you want to purge cache for ${selectedPurgeZones.size} zone(s)?`
+      );
+      if (!confirmed) return;
+
+      const accountId = accountSelect.value;
+      setButtonLoading(purgeBtn, true);
+
+      try {
+        const { batchId } = await sendMessage({
+          type: 'START_BATCH',
+          payload: {
+            operation: 'purge',
+            accountId,
+            zoneIds: Array.from(selectedPurgeZones),
+          },
+        });
+
+        currentBatchId = batchId;
+        batchStartTime = Date.now();
+        showProgressView('Purging cache...', selectedPurgeZones.size);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Failed to start purge';
+        alert(msg);
+        setButtonLoading(purgeBtn, false);
+      }
+    });
+  }
+}
+
+// ============================================================================
+// Progress View
+// ============================================================================
+
+function showProgressView(title: string, total: number): void {
+  showView('progress');
+
+  const titleEl = document.querySelector('[data-progress-title]');
+  if (titleEl) titleEl.textContent = title;
+
+  updateProgressDisplay({
+    total,
+    processed: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    blocked: 0,
+  });
+}
+
+function updateProgressDisplay(summary: BatchSummary): void {
+  // Update stats
+  const statEls = {
+    total: document.querySelector('[data-stat="total"]'),
+    processed: document.querySelector('[data-stat="processed"]'),
+    success: document.querySelector('[data-stat="success"]'),
+    failed: document.querySelector('[data-stat="failed"]'),
+    skipped: document.querySelector('[data-stat="skipped"]'),
+  };
+
+  if (statEls.total) statEls.total.textContent = String(summary.total);
+  if (statEls.processed) statEls.processed.textContent = String(summary.processed);
+  if (statEls.success) statEls.success.textContent = String(summary.success);
+  if (statEls.failed) statEls.failed.textContent = String(summary.failed);
+  if (statEls.skipped) statEls.skipped.textContent = String(summary.skipped);
+
+  // Update progress bar
+  const progressFill = document.querySelector('[data-progress-fill]') as HTMLElement;
+  if (progressFill) {
+    const percent = summary.total > 0 ? (summary.processed / summary.total) * 100 : 0;
+    progressFill.style.width = `${percent}%`;
+  }
+
+  // Update ETA
+  const etaEl = document.querySelector('[data-eta]');
+  if (etaEl && batchStartTime && summary.processed > 0) {
+    const elapsed = Date.now() - batchStartTime;
+    const avgTime = elapsed / summary.processed;
+    const remaining = summary.total - summary.processed;
+    const etaMs = remaining * avgTime;
+
+    if (etaMs > 0) {
+      const etaSec = Math.ceil(etaMs / 1000);
+      if (etaSec < 60) {
+        etaEl.textContent = `${etaSec}s`;
+      } else {
+        const min = Math.floor(etaSec / 60);
+        const sec = etaSec % 60;
+        etaEl.textContent = `${min}m ${sec}s`;
+      }
+    } else {
+      etaEl.textContent = 'completing...';
+    }
+  }
+}
+
+function initProgressView(): void {
+  const pauseBtn = document.querySelector('[data-action="pause"]') as HTMLButtonElement;
+  const resumeBtn = document.querySelector('[data-action="resume"]') as HTMLButtonElement;
+  const cancelBtn = document.querySelector('[data-action="cancel"]') as HTMLButtonElement;
+
+  pauseBtn?.addEventListener('click', async () => {
+    if (!currentBatchId) return;
+
+    try {
+      await sendMessage({
+        type: 'PAUSE_BATCH',
+        payload: { batchId: currentBatchId },
+      });
+      pauseBtn.hidden = true;
+      resumeBtn.hidden = false;
+    } catch (error) {
+      console.error('[CF Tools] Failed to pause:', error);
+    }
+  });
+
+  resumeBtn?.addEventListener('click', async () => {
+    if (!currentBatchId) return;
+
+    try {
+      await sendMessage({
+        type: 'RESUME_BATCH',
+        payload: { batchId: currentBatchId },
+      });
+      resumeBtn.hidden = true;
+      pauseBtn.hidden = false;
+    } catch (error) {
+      console.error('[CF Tools] Failed to resume:', error);
+    }
+  });
+
+  cancelBtn?.addEventListener('click', async () => {
+    if (!currentBatchId) return;
+
+    const confirmed = confirm('Are you sure you want to cancel?');
+    if (!confirmed) return;
+
+    try {
+      await sendMessage({
+        type: 'CANCEL_BATCH',
+        payload: { batchId: currentBatchId },
+      });
+      showView('create');
+      currentBatchId = null;
+    } catch (error) {
+      console.error('[CF Tools] Failed to cancel:', error);
+    }
+  });
+}
+
+// ============================================================================
+// Results View
+// ============================================================================
+
+let lastBatchSummary: BatchSummary | null = null;
+
+function showResultsView(summary: BatchSummary): void {
+  lastBatchSummary = summary;
+  showView('results');
+
+  // Update summary
+  const successEl = document.querySelector('[data-result-success]');
+  const failedEl = document.querySelector('[data-result-failed]');
+  const skippedEl = document.querySelector('[data-result-skipped]');
+
+  if (successEl) successEl.textContent = String(summary.success);
+  if (failedEl) failedEl.textContent = String(summary.failed);
+  if (skippedEl) skippedEl.textContent = String(summary.skipped);
+
+  // Show/hide failed section
+  const failedSection = document.querySelector('[data-results-failed]') as HTMLElement;
+  const retryBtn = document.querySelector('[data-action="retry-failed"]') as HTMLElement;
+  const exportBtn = document.querySelector('[data-action="export-failed"]') as HTMLElement;
+
+  if (summary.failed > 0) {
+    if (failedSection) failedSection.hidden = false;
+    if (retryBtn) retryBtn.hidden = false;
+    if (exportBtn) exportBtn.hidden = false;
+
+    // Load failed tasks
+    loadFailedTasks();
+  } else {
+    if (failedSection) failedSection.hidden = true;
+    if (retryBtn) retryBtn.hidden = true;
+    if (exportBtn) exportBtn.hidden = true;
+  }
+}
+
+async function loadFailedTasks(): Promise<void> {
+  if (!currentBatchId) return;
+
+  const list = document.querySelector('[data-list="failed"]');
+  if (!list) return;
+
+  try {
+    const { tasks } = await sendMessage({
+      type: 'GET_FAILED_TASKS',
+      payload: { batchId: currentBatchId },
+    });
+
+    list.innerHTML = '';
+    tasks.forEach((task) => {
+      const li = document.createElement('li');
+      li.className = 'results-item results-item--failed';
+      li.innerHTML = `
+        <span class="results-item__domain">${task.domain}</span>
+        <span class="results-item__error">${task.errorMessage || 'Unknown error'}</span>
+      `;
+      list.appendChild(li);
+    });
+  } catch (error) {
+    console.error('[CF Tools] Failed to load failed tasks:', error);
+  }
+}
+
+function initResultsView(): void {
+  const retryBtn = document.querySelector('[data-action="retry-failed"]') as HTMLButtonElement;
+  const exportBtn = document.querySelector('[data-action="export-failed"]') as HTMLButtonElement;
+  const doneBtn = document.querySelector('[data-action="done"]') as HTMLButtonElement;
+
+  retryBtn?.addEventListener('click', async () => {
+    if (!currentBatchId) return;
+
+    setButtonLoading(retryBtn, true);
+
+    try {
+      const { newBatchId, count } = await sendMessage({
+        type: 'RETRY_FAILED',
+        payload: { batchId: currentBatchId },
+      });
+
+      currentBatchId = newBatchId;
+      batchStartTime = Date.now();
+      showProgressView('Retrying failed...', count);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Retry failed';
+      alert(msg);
+      setButtonLoading(retryBtn, false);
+    }
+  });
+
+  exportBtn?.addEventListener('click', async () => {
+    if (!currentBatchId) return;
+
+    try {
+      const { tasks } = await sendMessage({
+        type: 'GET_FAILED_TASKS',
+        payload: { batchId: currentBatchId },
+      });
+
+      // Create CSV
+      const csv = ['domain,error'];
+      tasks.forEach((task) => {
+        const escapedError = (task.errorMessage || '').replace(/"/g, '""');
+        csv.push(`"${task.domain}","${escapedError}"`);
+      });
+
+      // Download
+      const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `failed-${currentBatchId}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('[CF Tools] Failed to export:', error);
+    }
+  });
+
+  doneBtn?.addEventListener('click', () => {
+    currentBatchId = null;
+    lastBatchSummary = null;
+    preflightResults = [];
+
+    // Reset preflight display
+    const preflightEl = document.querySelector('[data-preflight]') as HTMLElement;
+    if (preflightEl) preflightEl.hidden = true;
+
+    // Reset buttons
+    const startBtn = document.querySelector('[data-action="start-create"]') as HTMLButtonElement;
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.textContent = 'Start';
+    }
+
+    showView('create');
+  });
+}
+
+// ============================================================================
+// Settings View
+// ============================================================================
+
+async function loadSettings(): Promise<void> {
+  try {
+    const { settings } = await sendMessage({ type: 'GET_SETTINGS' });
+
+    // Auto-lock timeout
+    const timeoutSelect = document.getElementById('auto-lock-timeout') as HTMLSelectElement;
+    if (timeoutSelect) {
+      timeoutSelect.value = String(settings.autoLockTimeoutMinutes);
+    }
+
+    // Max concurrency
+    const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
+    if (concurrencySelect) {
+      concurrencySelect.value = String(settings.maxConcurrency);
+    }
+
+    // Dashboard buttons
+    const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
+    if (dashboardCheckbox) {
+      dashboardCheckbox.checked = settings.enableDashboardButtons;
+    }
+  } catch (error) {
+    console.error('[CF Tools] Failed to load settings:', error);
+  }
+}
+
+function initSettingsView(): void {
+  const timeoutSelect = document.getElementById('auto-lock-timeout') as HTMLSelectElement;
+  const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
+  const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
+  const clearDataBtn = document.querySelector('[data-action="clear-all-data"]') as HTMLButtonElement;
+  const changePasswordBtn = document.querySelector('[data-action="change-password"]') as HTMLButtonElement;
+
+  const saveSettings = async () => {
+    const settings: Partial<Settings> = {};
+
+    if (timeoutSelect) {
+      settings.autoLockTimeoutMinutes = parseInt(timeoutSelect.value, 10);
+    }
+    if (concurrencySelect) {
+      settings.maxConcurrency = parseInt(concurrencySelect.value, 10);
+    }
+    if (dashboardCheckbox) {
+      settings.enableDashboardButtons = dashboardCheckbox.checked;
+    }
+
+    try {
+      await sendMessage({
+        type: 'UPDATE_SETTINGS',
+        payload: settings as Settings,
+      });
+    } catch (error) {
+      console.error('[CF Tools] Failed to save settings:', error);
+    }
+  };
+
+  timeoutSelect?.addEventListener('change', saveSettings);
+  concurrencySelect?.addEventListener('change', saveSettings);
+  dashboardCheckbox?.addEventListener('change', saveSettings);
+
+  clearDataBtn?.addEventListener('click', async () => {
+    const confirmed = confirm(
+      'This will remove all stored credentials and settings. Are you sure?'
+    );
+    if (!confirmed) return;
+
+    try {
+      await sendMessage({ type: 'VAULT_CLEAR' });
+      isUnlocked = false;
+      showView('auth');
+      updateStatus(false);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Clear failed';
+      alert(msg);
+    }
+  });
+
+  changePasswordBtn?.addEventListener('click', async () => {
+    const oldPassword = prompt('Enter current master password:');
+    if (!oldPassword) return;
+
+    const newPassword = prompt('Enter new master password (min 8 characters):');
+    if (!newPassword || newPassword.length < 8) {
+      alert('Password must be at least 8 characters');
+      return;
+    }
+
+    const confirmPassword = prompt('Confirm new master password:');
+    if (newPassword !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    try {
+      await sendMessage({
+        type: 'VAULT_CHANGE_PASSWORD',
+        payload: { oldPassword, newPassword },
+      });
+      alert('Password changed successfully');
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Change failed';
+      alert(msg);
+    }
+  });
+}
+
+// ============================================================================
+// Reset Vault
+// ============================================================================
+
+function initResetVault(): void {
+  const resetLink = document.querySelector('[data-action="reset-vault"]');
+  resetLink?.addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    const confirmed = confirm(
+      'This will delete your saved credentials. You will need to re-enter your Cloudflare email and API key. Continue?'
+    );
+    if (!confirmed) return;
+
+    try {
+      await sendMessage({ type: 'VAULT_CLEAR' });
+      isUnlocked = false;
+      showView('auth');
+      updateStatus(false);
+    } catch (error) {
+      console.error('[CF Tools] Failed to reset vault:', error);
+    }
+  });
+}
+
+// ============================================================================
 // Initialization
 // ============================================================================
 
@@ -145,6 +919,11 @@ function initNavigation(): void {
         tabs.forEach((t) => t.classList.remove('is-active'));
         tab.classList.add('is-active');
         showView(tabName);
+
+        // Load settings when switching to settings tab
+        if (tabName === 'settings') {
+          loadSettings();
+        }
       }
     });
   });
@@ -248,8 +1027,16 @@ function initDomainInput(): void {
   textarea.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      const count = countDomains(textarea.value);
-      countEl.textContent = String(count);
+      const { domains } = parseDomains(textarea.value);
+      countEl.textContent = String(domains.length);
+
+      // Reset preflight when input changes
+      preflightResults = [];
+      const preflightEl = document.querySelector('[data-preflight]') as HTMLElement;
+      if (preflightEl) preflightEl.hidden = true;
+
+      const startBtn = document.querySelector('[data-action="start-create"]') as HTMLButtonElement;
+      if (startBtn) startBtn.disabled = true;
     }, 150);
   });
 }
@@ -262,6 +1049,21 @@ function initBackgroundEvents(): void {
       showView('unlock');
       updateStatus(false);
     }
+
+    if (message.type === 'BATCH_PROGRESS') {
+      const event = message as BatchProgressEvent;
+      updateProgressDisplay(event.payload.summary);
+    }
+
+    if (message.type === 'BATCH_COMPLETED') {
+      const event = message as BatchCompletedEvent;
+      showResultsView(event.payload.summary);
+    }
+
+    if (message.type === 'INCOMPLETE_BATCHES') {
+      // Could show notification about incomplete batches
+      console.log('[CF Tools] Incomplete batches:', message.payload.batches);
+    }
   });
 }
 
@@ -272,6 +1074,13 @@ async function init(): Promise<void> {
   initAuthForm();
   initUnlockForm();
   initDomainInput();
+  initCreateView();
+  initDeleteView();
+  initPurgeView();
+  initProgressView();
+  initResultsView();
+  initSettingsView();
+  initResetVault();
   initBackgroundEvents();
 
   // Check vault status and show appropriate view
