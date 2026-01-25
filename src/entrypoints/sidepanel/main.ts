@@ -510,13 +510,22 @@ function renderZoneList(
   zones.forEach((zone) => {
     const item = document.createElement('label');
     item.className = 'zone-item';
-    item.innerHTML = `
-      <input type="checkbox" class="zone-checkbox" data-zone-id="${zone.id}" ${selected.has(zone.id) ? 'checked' : ''} />
-      <span class="zone-name">${zone.name}</span>
-      <span class="zone-status" data-status="${zone.status}">${zone.status}</span>
-    `;
 
-    const checkbox = item.querySelector('input') as HTMLInputElement;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'zone-checkbox';
+    checkbox.dataset.zoneId = zone.id;
+    checkbox.checked = selected.has(zone.id);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'zone-name';
+    nameSpan.textContent = zone.name;
+
+    const statusSpan = document.createElement('span');
+    statusSpan.className = 'zone-status';
+    statusSpan.dataset.status = zone.status;
+    statusSpan.textContent = zone.status;
+
     checkbox.addEventListener('change', () => {
       if (checkbox.checked) {
         selected.add(zone.id);
@@ -530,6 +539,9 @@ function renderZoneList(
       }
     });
 
+    item.appendChild(checkbox);
+    item.appendChild(nameSpan);
+    item.appendChild(statusSpan);
     container.appendChild(item);
   });
 }
@@ -887,10 +899,16 @@ async function loadFailedTasks(): Promise<void> {
     tasks.forEach((task) => {
       const li = document.createElement('li');
       li.className = 'results-item results-item--failed';
-      li.innerHTML = `
-        <span class="results-item__domain">${task.domain}</span>
-        <span class="results-item__error">${task.errorMessage || 'Unknown error'}</span>
-      `;
+      const domainSpan = document.createElement('span');
+      domainSpan.className = 'results-item__domain';
+      domainSpan.textContent = task.domain;
+
+      const errorSpan = document.createElement('span');
+      errorSpan.className = 'results-item__error';
+      errorSpan.textContent = task.errorMessage || 'Unknown error';
+
+      li.appendChild(domainSpan);
+      li.appendChild(errorSpan);
       list.appendChild(li);
     });
   } catch (error) {
