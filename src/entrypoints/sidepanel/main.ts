@@ -4,10 +4,22 @@
  * Main application interface for bulk operations.
  */
 
+import { sendMessage } from '../../shared/messaging/protocol';
+import type { CFAccount } from '../../shared/types/api';
 import { countDomains } from '../../shared/domains';
 
-// View management
-type ViewName = 'auth' | 'create' | 'delete' | 'purge' | 'progress' | 'results' | 'settings';
+// ============================================================================
+// State
+// ============================================================================
+
+let currentAccounts: CFAccount[] = [];
+let isUnlocked = false;
+
+// ============================================================================
+// View Management
+// ============================================================================
+
+type ViewName = 'auth' | 'unlock' | 'create' | 'delete' | 'purge' | 'progress' | 'results' | 'settings';
 
 function showView(viewName: ViewName): void {
   // Hide all views
@@ -27,10 +39,100 @@ function showView(viewName: ViewName): void {
     panel.setAttribute('data-view', viewName);
   }
 
-  // Show/hide navigation
+  // Show/hide navigation (hide for auth, unlock, progress)
   const nav = document.querySelector('.panel__nav');
   if (nav) {
-    (nav as HTMLElement).hidden = viewName === 'auth' || viewName === 'progress';
+    (nav as HTMLElement).hidden = ['auth', 'unlock', 'progress'].includes(viewName);
+  }
+
+  // Show/hide lock button
+  const lockBtn = document.querySelector('[data-action="lock"]') as HTMLElement;
+  if (lockBtn) {
+    lockBtn.hidden = !isUnlocked;
+  }
+}
+
+function updateStatus(connected: boolean, email?: string): void {
+  const statusBadge = document.querySelector('.status-badge');
+  if (statusBadge) {
+    statusBadge.setAttribute('data-status', connected ? 'connected' : 'disconnected');
+    statusBadge.textContent = connected ? (email || 'Connected') : 'Disconnected';
+  }
+}
+
+function populateAccountSelectors(accounts: CFAccount[]): void {
+  const selectors = document.querySelectorAll('select[name="account"]');
+
+  selectors.forEach((select) => {
+    // Clear existing options except first
+    while (select.children.length > 1) {
+      select.removeChild(select.lastChild!);
+    }
+
+    // Add account options
+    accounts.forEach((account) => {
+      const option = document.createElement('option');
+      option.value = account.id;
+      option.textContent = account.name;
+      select.appendChild(option);
+    });
+  });
+}
+
+function showError(container: string, message: string): void {
+  const errorEl = document.querySelector(`[data-${container}-error]`) as HTMLElement;
+  if (errorEl) {
+    errorEl.textContent = message;
+    errorEl.hidden = false;
+  }
+}
+
+function hideError(container: string): void {
+  const errorEl = document.querySelector(`[data-${container}-error]`) as HTMLElement;
+  if (errorEl) {
+    errorEl.hidden = true;
+  }
+}
+
+function setButtonLoading(button: HTMLButtonElement, loading: boolean): void {
+  button.disabled = loading;
+  if (loading) {
+    button.dataset.originalText = button.textContent || '';
+    button.textContent = 'Loading...';
+  } else {
+    button.textContent = button.dataset.originalText || button.textContent;
+  }
+}
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+async function checkVaultStatus(): Promise<void> {
+  try {
+    const status = await sendMessage({ type: 'VAULT_STATUS' });
+
+    if (!status.isInitialized) {
+      // First time - show full auth form
+      showView('auth');
+      updateStatus(false);
+    } else if (!status.isUnlocked) {
+      // Locked - show unlock form
+      showView('unlock');
+      updateStatus(false, status.email);
+    } else {
+      // Unlocked - load accounts and show main UI
+      isUnlocked = true;
+      const { accounts } = await sendMessage({ type: 'GET_ACCOUNTS' });
+      currentAccounts = accounts;
+      populateAccountSelectors(accounts);
+      updateStatus(true, status.email);
+      showView('create');
+    }
+  } catch (error) {
+    console.error('[CF Tools] Failed to check vault status:', error);
+    showView('auth');
+    updateStatus(false);
   }
 }
 
@@ -40,14 +142,24 @@ function initNavigation(): void {
     tab.addEventListener('click', () => {
       const tabName = tab.getAttribute('data-tab') as ViewName;
       if (tabName) {
-        // Update active state
         tabs.forEach((t) => t.classList.remove('is-active'));
         tab.classList.add('is-active');
-
-        // Show view
         showView(tabName);
       }
     });
+  });
+
+  // Lock button
+  const lockBtn = document.querySelector('[data-action="lock"]');
+  lockBtn?.addEventListener('click', async () => {
+    try {
+      await sendMessage({ type: 'VAULT_LOCK' });
+      isUnlocked = false;
+      showView('unlock');
+      updateStatus(false);
+    } catch (error) {
+      console.error('[CF Tools] Failed to lock:', error);
+    }
   });
 }
 
@@ -57,21 +169,71 @@ function initAuthForm(): void {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    hideError('auth');
+
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    setButtonLoading(submitBtn, true);
 
     const formData = new FormData(form);
     const email = formData.get('email') as string;
     const apiKey = formData.get('apiKey') as string;
     const masterPassword = formData.get('masterPassword') as string;
 
-    // TODO: Validate credentials via background worker
-    // TODO: Encrypt and store credentials
-    // TODO: Load accounts
+    try {
+      const { user, accounts } = await sendMessage({
+        type: 'VAULT_INIT',
+        payload: { email, apiKey, masterPassword },
+      });
 
-    console.log('[CF Tools] Auth attempt:', { email, apiKeyLength: apiKey.length });
+      console.log('[CF Tools] Auth success:', user.email);
 
-    // For now, just show the create view
-    showView('create');
-    document.querySelector('.panel__nav')!.removeAttribute('hidden');
+      isUnlocked = true;
+      currentAccounts = accounts;
+      populateAccountSelectors(accounts);
+      updateStatus(true, user.email);
+      showView('create');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Authentication failed';
+      showError('auth', message);
+    } finally {
+      setButtonLoading(submitBtn, false);
+    }
+  });
+}
+
+function initUnlockForm(): void {
+  const form = document.querySelector('[data-form="unlock"]') as HTMLFormElement;
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError('unlock');
+
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    setButtonLoading(submitBtn, true);
+
+    const formData = new FormData(form);
+    const masterPassword = formData.get('masterPassword') as string;
+
+    try {
+      const { user, accounts } = await sendMessage({
+        type: 'VAULT_UNLOCK',
+        payload: { masterPassword },
+      });
+
+      console.log('[CF Tools] Unlock success:', user.email);
+
+      isUnlocked = true;
+      currentAccounts = accounts;
+      populateAccountSelectors(accounts);
+      updateStatus(true, user.email);
+      showView('create');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unlock failed';
+      showError('unlock', message);
+    } finally {
+      setButtonLoading(submitBtn, false);
+    }
   });
 }
 
@@ -92,16 +254,28 @@ function initDomainInput(): void {
   });
 }
 
-function init(): void {
+// Listen for background events
+function initBackgroundEvents(): void {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'VAULT_LOCKED') {
+      isUnlocked = false;
+      showView('unlock');
+      updateStatus(false);
+    }
+  });
+}
+
+async function init(): Promise<void> {
   console.log('[CF Tools] Side panel initialized');
 
   initNavigation();
   initAuthForm();
+  initUnlockForm();
   initDomainInput();
+  initBackgroundEvents();
 
-  // TODO: Check if already authenticated
-  // TODO: Handle lock/unlock
-  // TODO: Initialize all view handlers
+  // Check vault status and show appropriate view
+  await checkVaultStatus();
 }
 
 document.addEventListener('DOMContentLoaded', init);

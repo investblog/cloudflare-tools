@@ -7,14 +7,15 @@
 function init(): void {
   // Open Side Panel button
   const openPanelBtn = document.querySelector('[data-action="open-panel"]');
-  openPanelBtn?.addEventListener('click', () => {
+  openPanelBtn?.addEventListener('click', async () => {
     // Open side panel (Chrome 114+)
     if (chrome.sidePanel) {
-      chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT });
+      const currentWindow = await chrome.windows.getCurrent();
+      await chrome.sidePanel.open({ windowId: currentWindow.id! });
       window.close();
     } else {
       // Fallback: open panel in new tab
-      chrome.tabs.create({ url: chrome.runtime.getURL('panel.html') });
+      chrome.tabs.create({ url: chrome.runtime.getURL('sidepanel.html') });
     }
   });
 
