@@ -314,9 +314,11 @@ async function handleMessage(
           }
 
           try {
+            console.log('[CF Tools] Checking domain:', domain);
             const check = await preflightPool.add(() =>
               cfClient.checkZoneExists(encodeDomain(domain))
             );
+            console.log('[CF Tools] Check result:', domain, check);
 
             if (check.exists) {
               results.push({
@@ -327,7 +329,8 @@ async function handleMessage(
             } else {
               results.push({ domain, status: 'will-create' as PreflightStatus });
             }
-          } catch {
+          } catch (error) {
+            console.error('[CF Tools] Preflight error for', domain, ':', error);
             results.push({ domain, status: 'invalid' as PreflightStatus });
           }
         }
@@ -496,43 +499,64 @@ async function handleMessage(
 // Initialization
 // ============================================================================
 
+let initPromise: Promise<void> | null = null;
+
+async function initializeModules(): Promise<void> {
+  try {
+    await vault.init();
+    await ledger.open();
+
+    // Load and apply settings
+    const settings = await loadSettings();
+    await vault.updateConfig({
+      autoLockTimeoutMs: settings.autoLockTimeoutMinutes * 60 * 1000,
+    });
+    updatePoolConcurrency(settings.maxConcurrency);
+
+    // Check for incomplete batches
+    const incomplete = await ledger.getIncompleteBatches();
+    if (incomplete.length > 0) {
+      chrome.runtime.sendMessage({
+        type: 'INCOMPLETE_BATCHES',
+        payload: { batches: incomplete },
+      }).catch(() => {
+        // Panel might not be open
+      });
+    }
+
+    console.log('[CF Tools] Background initialized');
+  } catch (error) {
+    console.error('[CF Tools] Initialization error:', error);
+    throw error;
+  }
+}
+
+async function ensureInitialized(): Promise<void> {
+  if (!initPromise) {
+    initPromise = initializeModules();
+  }
+  await initPromise;
+}
+
 export default defineBackground(() => {
   console.log('[CF Tools] Background service worker started');
 
-  // Initialize modules
-  (async () => {
-    try {
-      await vault.init();
-      await ledger.open();
+  // Start initialization immediately
+  initPromise = initializeModules();
 
-      // Load and apply settings
-      const settings = await loadSettings();
-      await vault.updateConfig({
-        autoLockTimeoutMs: settings.autoLockTimeoutMinutes * 60 * 1000,
-      });
-      updatePoolConcurrency(settings.maxConcurrency);
-
-      // Check for incomplete batches
-      const incomplete = await ledger.getIncompleteBatches();
-      if (incomplete.length > 0) {
-        chrome.runtime.sendMessage({
-          type: 'INCOMPLETE_BATCHES',
-          payload: { batches: incomplete },
-        }).catch(() => {
-          // Panel might not be open
-        });
-      }
-
-      console.log('[CF Tools] Background initialized');
-    } catch (error) {
-      console.error('[CF Tools] Initialization error:', error);
-    }
-  })();
-
-  // Set up message handler
+  // Set up message handler - waits for initialization before processing
   chrome.runtime.onMessage.addListener(
     (message: RequestMessage, sender, sendResponse) => {
-      handleMessage(message, sender).then(sendResponse);
+      ensureInitialized()
+        .then(() => handleMessage(message, sender))
+        .then(sendResponse)
+        .catch((error) => {
+          console.error('[CF Tools] Message handler error:', error);
+          sendResponse({
+            success: false,
+            error: { code: 'INIT_ERROR', message: error.message },
+          });
+        });
       return true; // Keep channel open for async response
     }
   );
