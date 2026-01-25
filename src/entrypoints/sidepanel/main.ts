@@ -14,6 +14,13 @@ import type {
 import type { CFAccount, CFZone } from '../../shared/types/api';
 import type { BatchSummary } from '../../shared/types/tasks';
 import { parseDomains } from '../../shared/domains';
+import {
+  initTheme,
+  getThemePreference,
+  setThemePreference,
+  toggleTheme,
+  type ThemePreference,
+} from '../../shared/theme';
 
 // ============================================================================
 // Dialog System
@@ -1022,6 +1029,12 @@ async function loadSettings(): Promise<void> {
     if (lockOnUnloadCheckbox) {
       lockOnUnloadCheckbox.checked = settings.lockOnUnload;
     }
+
+    // Theme (stored locally, not in background)
+    const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
+    if (themeSelect) {
+      themeSelect.value = getThemePreference();
+    }
   } catch (error) {
     console.error('[CF Tools] Failed to load settings:', error);
   }
@@ -1032,8 +1045,15 @@ function initSettingsView(): void {
   const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
   const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
   const lockOnUnloadCheckbox = document.querySelector('input[name="lockOnUnload"]') as HTMLInputElement;
+  const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
   const clearDataBtn = document.querySelector('[data-action="clear-all-data"]') as HTMLButtonElement;
   const changePasswordBtn = document.querySelector('[data-action="change-password"]') as HTMLButtonElement;
+
+  // Theme change (stored locally)
+  themeSelect?.addEventListener('change', () => {
+    const preference = themeSelect.value as ThemePreference;
+    setThemePreference(preference);
+  });
 
   const saveSettings = async () => {
     const settings: Partial<Settings> = {};
@@ -1242,6 +1262,21 @@ function initNavigation(): void {
   });
 }
 
+// ============================================================================
+// Theme
+// ============================================================================
+
+function initThemeToggle(): void {
+  // Initialize theme system
+  initTheme();
+
+  // Theme toggle button in header
+  const toggleBtn = document.querySelector('[data-action="toggle-theme"]');
+  toggleBtn?.addEventListener('click', () => {
+    toggleTheme();
+  });
+}
+
 function initAuthForm(): void {
   const form = document.querySelector('[data-form="auth"]') as HTMLFormElement;
   if (!form) return;
@@ -1370,6 +1405,7 @@ function initBackgroundEvents(): void {
 async function init(): Promise<void> {
   console.log('[CF Tools] Side panel initialized');
 
+  initThemeToggle();
   initNavigation();
   initAuthForm();
   initUnlockForm();
