@@ -7,6 +7,7 @@
 
 import { sendMessage } from '../../shared/messaging/protocol';
 import type { CFAccount, CFZone } from '../../shared/types/api';
+import { initTheme } from '../../shared/theme';
 
 // ============================================================================
 // State
@@ -269,6 +270,7 @@ function initEventListeners(): void {
 async function init(): Promise<void> {
   console.log('[CF Tools] Popup initialized');
 
+  initTheme();
   initEventListeners();
   await checkVaultStatus();
 }

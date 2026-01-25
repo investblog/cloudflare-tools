@@ -14,6 +14,14 @@ import type {
 import type { CFAccount, CFZone } from '../../shared/types/api';
 import type { BatchSummary } from '../../shared/types/tasks';
 import { parseDomains } from '../../shared/domains';
+import {
+  initTheme,
+  getTheme,
+  getThemePreference,
+  setThemePreference,
+  toggleTheme,
+  type ThemePreference,
+} from '../../shared/theme';
 
 // ============================================================================
 // Dialog System
@@ -1004,6 +1012,12 @@ async function loadSettings(): Promise<void> {
     if (lockOnUnloadCheckbox) {
       lockOnUnloadCheckbox.checked = settings.lockOnUnload;
     }
+
+    // Theme (stored locally, not in background)
+    const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
+    if (themeSelect) {
+      themeSelect.value = getThemePreference();
+    }
   } catch (error) {
     console.error('[CF Tools] Failed to load settings:', error);
   }
@@ -1014,8 +1028,16 @@ function initSettingsView(): void {
   const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
   const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
   const lockOnUnloadCheckbox = document.querySelector('input[name="lockOnUnload"]') as HTMLInputElement;
+  const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
   const clearDataBtn = document.querySelector('[data-action="clear-all-data"]') as HTMLButtonElement;
   const changePasswordBtn = document.querySelector('[data-action="change-password"]') as HTMLButtonElement;
+
+  // Theme change (stored locally)
+  themeSelect?.addEventListener('change', () => {
+    const preference = themeSelect.value as ThemePreference;
+    setThemePreference(preference);
+    updateThemeIcon();
+  });
 
   const saveSettings = async () => {
     const settings: Partial<Settings> = {};
@@ -1224,6 +1246,53 @@ function initNavigation(): void {
   });
 }
 
+// ============================================================================
+// Theme
+// ============================================================================
+
+function updateThemeIcon(): void {
+  const theme = getTheme();
+  const darkIcon = document.querySelector('[data-theme-icon="dark"]') as HTMLElement;
+  const lightIcon = document.querySelector('[data-theme-icon="light"]') as HTMLElement;
+
+  if (darkIcon && lightIcon) {
+    // Show moon icon in dark mode (clicking will switch to light)
+    // Show sun icon in light mode (clicking will switch to dark)
+    darkIcon.hidden = theme !== 'dark';
+    lightIcon.hidden = theme !== 'light';
+  }
+}
+
+function initThemeToggle(): void {
+  // Initialize theme system
+  initTheme();
+  updateThemeIcon();
+
+  // Theme toggle button in header
+  const toggleBtn = document.querySelector('[data-action="toggle-theme"]');
+  toggleBtn?.addEventListener('click', () => {
+    toggleTheme();
+    updateThemeIcon();
+  });
+
+  // Listen for system theme changes
+  document.addEventListener('themechange', () => {
+    updateThemeIcon();
+  });
+
+  // Also listen for media query changes directly
+  try {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    mql.addEventListener('change', () => {
+      if (getThemePreference() === 'auto') {
+        updateThemeIcon();
+      }
+    });
+  } catch {
+    // matchMedia may not be available
+  }
+}
+
 function initAuthForm(): void {
   const form = document.querySelector('[data-form="auth"]') as HTMLFormElement;
   if (!form) return;
@@ -1352,6 +1421,7 @@ function initBackgroundEvents(): void {
 async function init(): Promise<void> {
   console.log('[CF Tools] Side panel initialized');
 
+  initThemeToggle();
   initNavigation();
   initAuthForm();
   initUnlockForm();

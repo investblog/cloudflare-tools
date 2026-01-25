@@ -98,7 +98,7 @@ export class Vault {
         const keyBytes = this.hexToArray(derivedKeyHex);
         this.derivedKey = await crypto.subtle.importKey(
           'raw',
-          keyBytes,
+          keyBytes.buffer as ArrayBuffer,
           { name: 'AES-GCM' },
           false,
           ['encrypt', 'decrypt']
