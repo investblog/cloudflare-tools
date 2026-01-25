@@ -35,6 +35,8 @@ export interface TaskEntry {
   updatedAt: number;
 }
 
+export type BatchStatus = 'pending' | 'running' | 'paused' | 'completed' | 'cancelled';
+
 export interface BatchInfo {
   id: string;
   operation: TaskOperation;
@@ -44,7 +46,8 @@ export interface BatchInfo {
   successCount: number;
   failedCount: number;
   skippedCount: number;
-  status: 'pending' | 'running' | 'paused' | 'completed' | 'cancelled';
+  blockedCount: number;
+  status: BatchStatus;
   createdAt: number;
   updatedAt: number;
 }

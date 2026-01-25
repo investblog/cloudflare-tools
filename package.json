@@ -15,9 +15,11 @@
   },
   "devDependencies": {
     "typescript": "^5.7.0",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0",
     "wxt": "^0.19.0"
   },
   "dependencies": {
-    "argon2-browser": "^1.18.0"
+    "hash-wasm": "^4.12.0"
   }
 }

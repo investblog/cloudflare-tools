@@ -1,24 +1,14 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["src/shared/*"],
-      "@background/*": ["src/background/*"],
-      "@panel/*": ["src/panel/*"]
+      "@background/*": ["src/background/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "wxt.config.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "wxt.config.ts", ".wxt/wxt.d.ts"],
   "exclude": ["node_modules", "dist", ".output"]
 }
