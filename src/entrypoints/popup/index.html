@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloudflare Tools</title>
+    <link rel="stylesheet" href="../../assets/css/theme.css" />
+    <link rel="stylesheet" href="../../assets/css/popup.css" />
+  </head>
+  <body>
+    <div class="popup">
+      <header class="popup__header">
+        <h1 class="popup__title">CF Tools</h1>
+        <span class="popup__status" data-status="disconnected">Disconnected</span>
+      </header>
+
+      <main class="popup__body">
+        <section class="popup__section">
+          <h2 class="popup__section-title">Quick Actions</h2>
+          <div class="popup__actions">
+            <button class="btn btn--primary btn--block" data-action="purge-all" disabled>
+              Purge All Cache
+            </button>
+            <button class="btn btn--ghost btn--block" data-action="export-zones" disabled>
+              Export Zones
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="popup__footer">
+        <button class="btn btn--primary btn--block" data-action="open-panel">
+          Open Full Panel →
+        </button>
+        <p class="popup__powered">
+          Powered by <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

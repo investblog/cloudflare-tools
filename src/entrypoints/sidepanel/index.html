@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloudflare Tools</title>
+    <link rel="stylesheet" href="../../assets/css/theme.css" />
+    <link rel="stylesheet" href="../../assets/css/panel.css" />
+  </head>
+  <body>
+    <div class="panel" data-view="auth">
+      <!-- Header -->
+      <header class="panel__header">
+        <h1 class="panel__title">Cloudflare Tools</h1>
+        <div class="panel__status">
+          <span class="status-badge" data-status="disconnected">Disconnected</span>
+          <button class="btn btn--ghost btn--sm" data-action="lock" hidden>
+            Lock
+          </button>
+        </div>
+      </header>
+
+      <!-- Navigation (shown when authenticated) -->
+      <nav class="panel__nav" hidden>
+        <button class="nav-tab is-active" data-tab="create">Create</button>
+        <button class="nav-tab" data-tab="delete">Delete</button>
+        <button class="nav-tab" data-tab="purge">Purge</button>
+        <button class="nav-tab" data-tab="settings">Settings</button>
+      </nav>
+
+      <!-- Views -->
+      <main class="panel__body">
+        <!-- Auth View -->
+        <section class="view view--auth" data-view-content="auth">
+          <form class="auth-form" data-form="auth">
+            <div class="form-group">
+              <label for="cf-email">Cloudflare Email</label>
+              <input
+                type="email"
+                id="cf-email"
+                name="email"
+                class="input"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="cf-api-key">Global API Key</label>
+              <input
+                type="password"
+                id="cf-api-key"
+                name="apiKey"
+                class="input"
+                placeholder="c2547eb745079dac..."
+                required
+              />
+              <p class="form-hint">
+                <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">
+                  Get your Global API Key →
+                </a>
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label for="master-password">Master Password</label>
+              <input
+                type="password"
+                id="master-password"
+                name="masterPassword"
+                class="input"
+                placeholder="Encrypt your credentials"
+                required
+                minlength="8"
+              />
+              <p class="form-hint">
+                Used to encrypt your API key locally. You'll need this to unlock.
+              </p>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--block">
+              Connect
+            </button>
+
+            <p class="auth-error" data-auth-error hidden></p>
+          </form>
+        </section>
+
+        <!-- Create View -->
+        <section class="view view--create" data-view-content="create" hidden>
+          <div class="view__header">
+            <h2>Bulk Create Zones</h2>
+          </div>
+
+          <!-- Account Selector -->
+          <div class="form-group">
+            <label for="account-select">Account</label>
+            <select id="account-select" name="account" class="input" required>
+              <option value="">Select account...</option>
+            </select>
+          </div>
+
+          <!-- Domain Input -->
+          <div class="form-group">
+            <label for="domains-input">Domains</label>
+            <textarea
+              id="domains-input"
+              name="domains"
+              class="input textarea"
+              placeholder="Paste domains, URLs, or any text containing domains...&#10;&#10;example.com&#10;https://site.ru/page&#10;domain.net"
+              rows="8"
+            ></textarea>
+            <p class="form-hint">
+              <span data-domain-count>0</span> domains detected
+            </p>
+          </div>
+
+          <!-- Zone Settings -->
+          <fieldset class="fieldset">
+            <legend>Zone Settings</legend>
+            <label class="checkbox">
+              <input type="checkbox" name="jumpStart" checked />
+              <span>Jump start (auto DNS scan)</span>
+            </label>
+            <div class="form-group">
+              <label for="zone-type">Type</label>
+              <select id="zone-type" name="type" class="input">
+                <option value="full" selected>Full (Cloudflare nameservers)</option>
+                <option value="partial">Partial (CNAME setup)</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <!-- Preflight Results -->
+          <div class="preflight-results" data-preflight hidden>
+            <div class="preflight-badge" data-preflight-status="will-create">
+              <span class="badge badge--success" data-count="will-create">0</span> will create
+            </div>
+            <div class="preflight-badge" data-preflight-status="exists">
+              <span class="badge badge--muted" data-count="exists">0</span> exist (skip)
+            </div>
+            <div class="preflight-badge" data-preflight-status="invalid">
+              <span class="badge badge--danger" data-count="invalid">0</span> invalid
+            </div>
+            <div class="preflight-badge" data-preflight-status="duplicate">
+              <span class="badge badge--warning" data-count="duplicate">0</span> duplicate
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="view__actions">
+            <button class="btn btn--ghost" data-action="check-first">
+              Check first
+            </button>
+            <button class="btn btn--primary" data-action="start-create" disabled>
+              Start
+            </button>
+          </div>
+        </section>
+
+        <!-- Delete View -->
+        <section class="view view--delete" data-view-content="delete" hidden>
+          <div class="view__header">
+            <h2>Bulk Delete Zones</h2>
+          </div>
+
+          <!-- Account Selector -->
+          <div class="form-group">
+            <label for="delete-account-select">Account</label>
+            <select id="delete-account-select" name="account" class="input" required>
+              <option value="">Select account...</option>
+            </select>
+          </div>
+
+          <!-- Zone List -->
+          <div class="zone-list" data-zone-list>
+            <div class="zone-list__loading" data-loading>
+              Loading zones...
+            </div>
+            <div class="zone-list__empty" data-empty hidden>
+              No zones found in this account.
+            </div>
+            <!-- Zone items will be rendered here -->
+          </div>
+
+          <!-- Actions -->
+          <div class="view__actions">
+            <span class="selection-count">
+              <span data-selected-count>0</span> selected
+            </span>
+            <button class="btn btn--danger" data-action="start-delete" disabled>
+              Delete Selected
+            </button>
+          </div>
+        </section>
+
+        <!-- Purge View -->
+        <section class="view view--purge" data-view-content="purge" hidden>
+          <div class="view__header">
+            <h2>Bulk Purge Cache</h2>
+          </div>
+
+          <!-- Account Selector -->
+          <div class="form-group">
+            <label for="purge-account-select">Account</label>
+            <select id="purge-account-select" name="account" class="input" required>
+              <option value="">Select account...</option>
+            </select>
+          </div>
+
+          <!-- Zone List -->
+          <div class="zone-list" data-zone-list>
+            <div class="zone-list__loading" data-loading>
+              Loading zones...
+            </div>
+            <div class="zone-list__empty" data-empty hidden>
+              No zones found in this account.
+            </div>
+            <!-- Zone items will be rendered here -->
+          </div>
+
+          <!-- Actions -->
+          <div class="view__actions">
+            <span class="selection-count">
+              <span data-selected-count>0</span> selected
+            </span>
+            <button class="btn btn--primary" data-action="start-purge" disabled>
+              Purge Everything
+            </button>
+          </div>
+        </section>
+
+        <!-- Progress View (overlay) -->
+        <section class="view view--progress" data-view-content="progress" hidden>
+          <div class="progress-panel">
+            <h2 class="progress-panel__title" data-progress-title>Processing...</h2>
+
+            <!-- Summary -->
+            <div class="batch-summary">
+              <div class="batch-summary__stat">
+                <span class="batch-summary__value" data-stat="processed">0</span>
+                <span class="batch-summary__label">/ <span data-stat="total">0</span></span>
+              </div>
+              <div class="batch-summary__stat batch-summary__stat--success">
+                <span class="batch-summary__value" data-stat="success">0</span>
+                <span class="batch-summary__label">success</span>
+              </div>
+              <div class="batch-summary__stat batch-summary__stat--failed">
+                <span class="batch-summary__value" data-stat="failed">0</span>
+                <span class="batch-summary__label">failed</span>
+              </div>
+              <div class="batch-summary__stat batch-summary__stat--skipped">
+                <span class="batch-summary__value" data-stat="skipped">0</span>
+                <span class="batch-summary__label">skipped</span>
+              </div>
+            </div>
+
+            <!-- ETA -->
+            <div class="progress-eta">
+              ETA: <span data-eta>calculating...</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+              <div class="progress-bar__fill" data-progress-fill style="width: 0%"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="progress-controls">
+              <button class="btn btn--ghost" data-action="pause">Pause</button>
+              <button class="btn btn--ghost" data-action="resume" hidden>Resume</button>
+              <button class="btn btn--danger" data-action="cancel">Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Results View -->
+        <section class="view view--results" data-view-content="results" hidden>
+          <div class="view__header">
+            <h2>Results</h2>
+          </div>
+
+          <!-- Summary -->
+          <div class="results-summary">
+            <p>
+              <strong data-result-success>0</strong> succeeded,
+              <strong data-result-failed>0</strong> failed,
+              <strong data-result-skipped>0</strong> skipped
+            </p>
+          </div>
+
+          <!-- Failed Items -->
+          <div class="results-section" data-results-failed hidden>
+            <h3>Failed</h3>
+            <ul class="results-list" data-list="failed"></ul>
+          </div>
+
+          <!-- Actions -->
+          <div class="view__actions">
+            <button class="btn btn--ghost" data-action="retry-failed" hidden>
+              Retry Failed
+            </button>
+            <button class="btn btn--ghost" data-action="export-failed" hidden>
+              Export Failed
+            </button>
+            <button class="btn btn--primary" data-action="done">
+              Done
+            </button>
+          </div>
+        </section>
+
+        <!-- Settings View -->
+        <section class="view view--settings" data-view-content="settings" hidden>
+          <div class="view__header">
+            <h2>Settings</h2>
+          </div>
+
+          <div class="settings-section">
+            <h3>Security</h3>
+            <div class="form-group">
+              <label for="auto-lock-timeout">Auto-lock timeout</label>
+              <select id="auto-lock-timeout" name="autoLockTimeout" class="input">
+                <option value="1">1 minute</option>
+                <option value="5">5 minutes</option>
+                <option value="15" selected>15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+
+            <label class="checkbox">
+              <input type="checkbox" name="rememberSession" checked />
+              <span>Remember for session</span>
+            </label>
+
+            <label class="checkbox">
+              <input type="checkbox" name="lockOnUnload" checked />
+              <span>Lock on browser close</span>
+            </label>
+
+            <button class="btn btn--ghost" data-action="change-password">
+              Change Master Password
+            </button>
+          </div>
+
+          <div class="settings-section">
+            <h3>Rate Limits</h3>
+            <div class="form-group">
+              <label for="max-concurrency">Max concurrent requests</label>
+              <select id="max-concurrency" name="maxConcurrency" class="input">
+                <option value="2">2</option>
+                <option value="4" selected>4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Dashboard Integration</h3>
+            <label class="checkbox">
+              <input type="checkbox" name="enableDashboardButtons" />
+              <span>Enable Dashboard buttons</span>
+            </label>
+            <p class="form-hint">
+              Adds "Bulk Add" and "Export" buttons to Cloudflare Dashboard.
+            </p>
+          </div>
+
+          <div class="settings-section settings-section--danger">
+            <h3>Danger Zone</h3>
+            <button class="btn btn--danger" data-action="clear-all-data">
+              Clear All Data
+            </button>
+            <p class="form-hint">
+              Removes all stored credentials and settings.
+            </p>
+          </div>
+
+          <div class="settings-section">
+            <h3>About</h3>
+            <p class="settings-about">
+              <strong>Cloudflare Tools</strong> v0.1.0<br />
+              Free bulk operations for CF zones.<br /><br />
+              For advanced domain management, redirects and TDS — try
+              <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
+            </p>
+            <p class="settings-links">
+              <a href="privacy.html" target="_blank">Privacy Policy</a>
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="panel__footer">
+        <p class="panel__powered">
+          Powered by <a href="https://301.st" target="_blank" rel="noopener">301.st</a>
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
