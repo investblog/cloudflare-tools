@@ -217,11 +217,64 @@ function broadcastSettingsChanged(settings: Settings): void {
 // Message Handler
 // ============================================================================
 
+const CONTENT_SCRIPT_ALLOWED = new Set<RequestMessage['type']>([
+  'OPEN_SIDE_PANEL',
+  'GET_SETTINGS',
+  'GET_ZONES',
+]);
+
+function isExtensionPageSender(sender: chrome.runtime.MessageSender): boolean {
+  if (sender.id !== chrome.runtime.id) {
+    return false;
+  }
+  const origin = chrome.runtime.getURL('');
+  return Boolean(sender.url?.startsWith(origin));
+}
+
+function isContentScriptSender(sender: chrome.runtime.MessageSender): boolean {
+  if (sender.id !== chrome.runtime.id) {
+    return false;
+  }
+  const url = sender.origin ?? sender.url;
+  if (!url) {
+    return false;
+  }
+  try {
+    const parsed = new URL(url);
+    return parsed.origin === 'https://dash.cloudflare.com';
+  } catch {
+    return false;
+  }
+}
+
 async function handleMessage(
   message: RequestMessage,
   _sender: chrome.runtime.MessageSender
 ): Promise<MessageResponse<unknown>> {
   try {
+    const isExtensionPage = isExtensionPageSender(_sender);
+    const isContentScript = isContentScriptSender(_sender);
+
+    if (!isExtensionPage && !isContentScript) {
+      return {
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED_SENDER',
+          message: 'Message sender is not authorized',
+        },
+      };
+    }
+
+    if (isContentScript && !CONTENT_SCRIPT_ALLOWED.has(message.type)) {
+      return {
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED_MESSAGE',
+          message: `Message type ${message.type} not allowed from content scripts`,
+        },
+      };
+    }
+
     switch (message.type) {
       // ====== Vault ======
       case 'VAULT_STATUS': {
@@ -593,5 +646,5 @@ export default defineBackground(() => {
   );
 
   // Note: beforeunload doesn't work in Service Workers (MV3)
-  // Vault state is persisted in chrome.storage.session instead
+  // Vault remains locked on service worker restart
 });
