@@ -51,7 +51,7 @@ export const CF_ERROR_CODES = {
  * Map CF error code to normalized error
  */
 export function normalizeError(
-  code: number,
+  code: number | string,
   message: string,
   retryAfterHeader?: string
 ): NormalizedError {
@@ -59,11 +59,25 @@ export function normalizeError(
     ? parseInt(retryAfterHeader, 10) * 1000
     : undefined;
 
+  // Timeout error
+  if (code === 'TIMEOUT') {
+    return {
+      category: 'network',
+      code: 0,
+      message,
+      recommendation: 'Request timed out, retrying...',
+      retryable: true,
+    };
+  }
+
+  // Ensure code is a number for remaining checks
+  const numCode = typeof code === 'number' ? code : parseInt(code, 10) || 0;
+
   // Auth errors
-  if (code === CF_ERROR_CODES.INVALID_CREDENTIALS || code === CF_ERROR_CODES.INVALID_TOKEN) {
+  if (numCode === CF_ERROR_CODES.INVALID_CREDENTIALS || numCode === CF_ERROR_CODES.INVALID_TOKEN) {
     return {
       category: 'auth',
-      code,
+      code: numCode,
       message,
       recommendation: 'Check your email and Global API Key',
       retryable: false,
@@ -71,10 +85,10 @@ export function normalizeError(
   }
 
   // Rate limit
-  if (code === CF_ERROR_CODES.RATE_LIMITED) {
+  if (numCode === CF_ERROR_CODES.RATE_LIMITED) {
     return {
       category: 'rate_limit',
-      code,
+      code: numCode,
       message: message || 'Rate limited',
       recommendation: 'Waiting for rate limit to reset...',
       retryable: true,
@@ -83,10 +97,10 @@ export function normalizeError(
   }
 
   // Validation - zone exists
-  if (code === CF_ERROR_CODES.ZONE_ALREADY_EXISTS) {
+  if (numCode === CF_ERROR_CODES.ZONE_ALREADY_EXISTS) {
     return {
       category: 'validation',
-      code,
+      code: numCode,
       message,
       recommendation: 'Zone already exists in this account',
       retryable: false,
@@ -94,10 +108,10 @@ export function normalizeError(
   }
 
   // Dependency - subscription
-  if (code === CF_ERROR_CODES.ZONE_HAS_SUBSCRIPTION) {
+  if (numCode === CF_ERROR_CODES.ZONE_HAS_SUBSCRIPTION) {
     return {
       category: 'dependency',
-      code,
+      code: numCode,
       message,
       recommendation: 'Remove subscriptions in Cloudflare Dashboard first',
       retryable: false,
@@ -105,10 +119,10 @@ export function normalizeError(
   }
 
   // Network errors (5xx)
-  if (code >= 500 && code < 600) {
+  if (numCode >= 500 && numCode < 600) {
     return {
       category: 'network',
-      code,
+      code: numCode,
       message: message || 'Server error',
       recommendation: 'Retrying automatically...',
       retryable: true,
@@ -116,10 +130,10 @@ export function normalizeError(
   }
 
   // Permission errors
-  if (code === CF_ERROR_CODES.INVALID_TOKEN) {
+  if (numCode === CF_ERROR_CODES.INVALID_TOKEN) {
     return {
       category: 'permission',
-      code,
+      code: numCode,
       message,
       recommendation: 'API key lacks required permissions',
       retryable: false,
@@ -129,7 +143,7 @@ export function normalizeError(
   // Unknown
   return {
     category: 'unknown',
-    code,
+    code: numCode,
     message,
     recommendation: 'An unexpected error occurred',
     retryable: false,

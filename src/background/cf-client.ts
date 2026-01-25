@@ -43,6 +43,7 @@ export interface CFClientError extends Error {
 // ============================================================================
 
 const BASE_URL = 'https://api.cloudflare.com/client/v4';
+const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
 
 // ============================================================================
 // CF Client Class
@@ -148,13 +149,19 @@ export class CFClient {
 
   /**
    * Make an authenticated request to Cloudflare API.
+   * Includes timeout, security headers, and proper error handling.
    */
   private async fetch<T>(
     method: 'GET' | 'POST' | 'DELETE' | 'PATCH' | 'PUT',
     endpoint: string,
-    body?: unknown
+    body?: unknown,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS
   ): Promise<T> {
     const credentials = vault.getCredentials();
+
+    // AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const headers: HeadersInit = {
       'X-Auth-Email': credentials.email,
@@ -165,42 +172,70 @@ export class CFClient {
     const options: RequestInit = {
       method,
       headers,
+      signal: controller.signal,
+      // Security hardening
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+      cache: 'no-store',
     };
 
     if (body) {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, options);
-    const data: CFApiResponse<T> = await response.json();
+    try {
+      const response = await fetch(`${BASE_URL}${endpoint}`, options);
+      const data: CFApiResponse<T> = await response.json();
 
-    if (!data.success) {
-      const error = data.errors[0];
-      const retryAfterHeader = response.headers.get('Retry-After');
-      const normalized = normalizeError(
-        error?.code ?? response.status,
-        error?.message ?? 'Unknown error',
-        retryAfterHeader ?? undefined
-      );
+      if (!data.success) {
+        const error = data.errors[0];
+        const retryAfterHeader = response.headers.get('Retry-After');
+        const normalized = normalizeError(
+          error?.code ?? response.status,
+          error?.message ?? 'Unknown error',
+          retryAfterHeader ?? undefined
+        );
 
-      const cfError = new Error(normalized.message) as CFClientError;
-      cfError.name = 'CFClientError';
-      cfError.normalized = normalized;
-      cfError.retryAfterMs = normalized.retryAfterMs;
+        const cfError = new Error(normalized.message) as CFClientError;
+        cfError.name = 'CFClientError';
+        cfError.normalized = normalized;
+        cfError.retryAfterMs = normalized.retryAfterMs;
 
-      throw cfError;
+        throw cfError;
+      }
+
+      return data.result;
+    } catch (err) {
+      // Handle abort/timeout
+      if (err instanceof Error && err.name === 'AbortError') {
+        const normalized = normalizeError(
+          'TIMEOUT',
+          `Request timed out after ${timeoutMs}ms`
+        );
+        const cfError = new Error(normalized.message) as CFClientError;
+        cfError.name = 'CFClientError';
+        cfError.normalized = normalized;
+        throw cfError;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return data.result;
   }
 
   /**
    * Fetch with pagination info.
+   * Includes timeout and security headers.
    */
   private async fetchWithPagination<T>(
-    endpoint: string
+    endpoint: string,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS
   ): Promise<PaginatedResult<T>> {
     const credentials = vault.getCredentials();
+
+    // AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const headers: HeadersInit = {
       'X-Auth-Email': credentials.email,
@@ -208,40 +243,62 @@ export class CFClient {
       'Content-Type': 'application/json',
     };
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: 'GET',
-      headers,
-    });
+    try {
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+        // Security hardening
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        cache: 'no-store',
+      });
 
-    const data: CFApiResponse<T[]> = await response.json();
+      const data: CFApiResponse<T[]> = await response.json();
 
-    if (!data.success) {
-      const error = data.errors[0];
-      const retryAfterHeader = response.headers.get('Retry-After');
-      const normalized = normalizeError(
-        error?.code ?? response.status,
-        error?.message ?? 'Unknown error',
-        retryAfterHeader ?? undefined
-      );
+      if (!data.success) {
+        const error = data.errors[0];
+        const retryAfterHeader = response.headers.get('Retry-After');
+        const normalized = normalizeError(
+          error?.code ?? response.status,
+          error?.message ?? 'Unknown error',
+          retryAfterHeader ?? undefined
+        );
 
-      const cfError = new Error(normalized.message) as CFClientError;
-      cfError.name = 'CFClientError';
-      cfError.normalized = normalized;
-      cfError.retryAfterMs = normalized.retryAfterMs;
+        const cfError = new Error(normalized.message) as CFClientError;
+        cfError.name = 'CFClientError';
+        cfError.normalized = normalized;
+        cfError.retryAfterMs = normalized.retryAfterMs;
 
-      throw cfError;
+        throw cfError;
+      }
+
+      return {
+        items: data.result,
+        pagination: data.result_info ?? {
+          page: 1,
+          per_page: data.result.length,
+          count: data.result.length,
+          total_count: data.result.length,
+          total_pages: 1,
+        },
+      };
+    } catch (err) {
+      // Handle abort/timeout
+      if (err instanceof Error && err.name === 'AbortError') {
+        const normalized = normalizeError(
+          'TIMEOUT',
+          `Request timed out after ${timeoutMs}ms`
+        );
+        const cfError = new Error(normalized.message) as CFClientError;
+        cfError.name = 'CFClientError';
+        cfError.normalized = normalized;
+        throw cfError;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return {
-      items: data.result,
-      pagination: data.result_info ?? {
-        page: 1,
-        per_page: data.result.length,
-        count: data.result.length,
-        total_count: data.result.length,
-        total_pages: 1,
-      },
-    };
   }
 }
 

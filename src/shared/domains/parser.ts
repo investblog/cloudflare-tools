@@ -2,14 +2,27 @@
  * Domain Parser
  * Extracts and validates domain names from arbitrary text input.
  *
- * Copied from 301-ui: src/domains/add-domains-drawer.ts
+ * Handles:
+ * - ASCII domains (example.com)
+ * - Punycode domains (xn--d1acufc.xn--p1ai)
+ * - Unicode/IDN domains (домен.рф, müller.de)
+ * - URLs (extracts domain from https://example.com/path)
+ * - Trailing dots (example.com. → example.com)
  */
 
+import { encodeDomain, isUnicode } from './idn';
+
 /**
- * Regex for extracting domain names from text.
- * Matches: example.com, xn--domain.net, sub.domain.co.uk, домен.рф (as punycode)
+ * Regex for extracting ASCII domain names from text.
+ * Matches: example.com, xn--domain.net, sub.domain.co.uk
  */
-const DOMAIN_REGEX = /\b((?=[a-z0-9-]{1,63}\.)(?:xn--)?[a-z0-9]+(?:-[a-z0-9]+)*\.)+(?:xn--)?[a-z0-9-]{2,63}\b/gi;
+const ASCII_DOMAIN_REGEX = /\b((?=[a-z0-9-]{1,63}\.)(?:xn--)?[a-z0-9]+(?:-[a-z0-9]+)*\.)+(?:xn--)?[a-z0-9-]{2,63}\b/gi;
+
+/**
+ * Regex for extracting Unicode domain names.
+ * Matches domain-like patterns with non-ASCII characters.
+ */
+const UNICODE_DOMAIN_REGEX = /(?:^|[\s,;|])([^\s,;|./]+(?:\.[^\s,;|./]+)+)(?:[\s,;|]|$)/g;
 
 /**
  * Validates that TLD contains at least one letter.
@@ -41,6 +54,59 @@ export interface ParseResult {
 }
 
 /**
+ * Normalize a domain string:
+ * - Trim whitespace
+ * - Remove trailing dots
+ * - Convert Unicode to punycode
+ * - Lowercase
+ */
+function normalizeDomain(domain: string): string {
+  let normalized = domain.trim().toLowerCase();
+
+  // Remove trailing dot (DNS root)
+  if (normalized.endsWith('.')) {
+    normalized = normalized.slice(0, -1);
+  }
+
+  // Convert Unicode to punycode
+  if (isUnicode(normalized)) {
+    normalized = encodeDomain(normalized);
+  }
+
+  return normalized;
+}
+
+/**
+ * Extract potential domains from text, including Unicode domains.
+ */
+function extractPotentialDomains(text: string): string[] {
+  const results: string[] = [];
+
+  // Extract ASCII domains
+  const asciiMatches = text.match(ASCII_DOMAIN_REGEX) || [];
+  results.push(...asciiMatches);
+
+  // Extract Unicode domains (line by line to handle mixed content)
+  const lines = text.split(/[\n\r]+/);
+  for (const line of lines) {
+    // Split by common separators
+    const parts = line.split(/[\s,;|]+/);
+    for (const part of parts) {
+      // Check if it looks like a Unicode domain
+      if (isUnicode(part) && part.includes('.')) {
+        // Try to encode it - if successful, it's likely a valid domain
+        const encoded = encodeDomain(part);
+        if (encoded !== part.toLowerCase() && encoded.includes('.')) {
+          results.push(encoded);
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
  * Parse domains from arbitrary text input.
  * Extracts unique, valid domains and identifies duplicates/invalid entries.
  *
@@ -49,14 +115,17 @@ export interface ParseResult {
  * @returns ParseResult with domains, duplicates, and invalid entries
  */
 export function parseDomains(text: string, rootOnly = true): ParseResult {
-  const matches = text.match(DOMAIN_REGEX) || [];
+  const matches = extractPotentialDomains(text);
   const seen = new Set<string>();
   const domains: string[] = [];
   const duplicates: string[] = [];
   const invalid: string[] = [];
 
   for (const match of matches) {
-    const domain = match.toLowerCase().trim();
+    const domain = normalizeDomain(match);
+
+    // Skip empty
+    if (!domain) continue;
 
     // Skip invalid TLDs
     if (!hasValidTLD(domain)) {
@@ -95,11 +164,11 @@ export function parseDomains(text: string, rootOnly = true): ParseResult {
  * Useful for preview without full parsing.
  */
 export function countDomains(text: string): number {
-  const matches = text.match(DOMAIN_REGEX) || [];
+  const matches = extractPotentialDomains(text);
   const unique = new Set(
     matches
-      .map((d) => d.toLowerCase().trim())
-      .filter(hasValidTLD)
+      .map(normalizeDomain)
+      .filter((d) => d && hasValidTLD(d))
   );
   return unique.size;
 }

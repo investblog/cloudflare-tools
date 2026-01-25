@@ -131,9 +131,9 @@
 - [x] Add sender validation/allowlist in background message handler.
 - [x] Remove `innerHTML` rendering for zone names and error strings.
 - [x] Do not persist derived key or plaintext API key in `chrome.storage.session`.
-- [ ] Add abortable fetch with timeout + retry/backoff for 429/5xx.
-- [ ] Set `credentials: 'omit'`, `referrerPolicy: 'no-referrer'`, `cache: 'no-store'` on API requests.
+- [x] Add abortable fetch with timeout + retry/backoff for 429/5xx.
+- [x] Set `credentials: 'omit'`, `referrerPolicy: 'no-referrer'`, `cache: 'no-store'` on API requests.
 - [ ] Bind AES-GCM with AAD and store Argon2 params + version in vault record.
-- [ ] Normalize domains (IDN → punycode, trailing dot removal) before preflight/batch.
+- [x] Normalize domains (IDN → punycode, trailing dot removal) before preflight/batch.
 - [ ] Expand root-domain detection via public suffix list or a vetted library.
 - [ ] Log redaction: ensure errors never include Authorization headers.
