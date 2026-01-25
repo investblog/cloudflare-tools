@@ -16,7 +16,6 @@ import type { BatchSummary } from '../../shared/types/tasks';
 import { parseDomains } from '../../shared/domains';
 import {
   initTheme,
-  getTheme,
   getThemePreference,
   setThemePreference,
   toggleTheme,
@@ -1036,7 +1035,6 @@ function initSettingsView(): void {
   themeSelect?.addEventListener('change', () => {
     const preference = themeSelect.value as ThemePreference;
     setThemePreference(preference);
-    updateThemeIcon();
   });
 
   const saveSettings = async () => {
@@ -1250,47 +1248,15 @@ function initNavigation(): void {
 // Theme
 // ============================================================================
 
-function updateThemeIcon(): void {
-  const theme = getTheme();
-  const darkIcon = document.querySelector('[data-theme-icon="dark"]') as HTMLElement;
-  const lightIcon = document.querySelector('[data-theme-icon="light"]') as HTMLElement;
-
-  if (darkIcon && lightIcon) {
-    // Show moon icon in dark mode (clicking will switch to light)
-    // Show sun icon in light mode (clicking will switch to dark)
-    darkIcon.hidden = theme !== 'dark';
-    lightIcon.hidden = theme !== 'light';
-  }
-}
-
 function initThemeToggle(): void {
   // Initialize theme system
   initTheme();
-  updateThemeIcon();
 
   // Theme toggle button in header
   const toggleBtn = document.querySelector('[data-action="toggle-theme"]');
   toggleBtn?.addEventListener('click', () => {
     toggleTheme();
-    updateThemeIcon();
   });
-
-  // Listen for system theme changes
-  document.addEventListener('themechange', () => {
-    updateThemeIcon();
-  });
-
-  // Also listen for media query changes directly
-  try {
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    mql.addEventListener('change', () => {
-      if (getThemePreference() === 'auto') {
-        updateThemeIcon();
-      }
-    });
-  } catch {
-    // matchMedia may not be available
-  }
 }
 
 function initAuthForm(): void {
