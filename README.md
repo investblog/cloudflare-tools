@@ -23,7 +23,7 @@ Coming soon...
 
 ```bash
 # Clone the repository
-git clone https://github.com/admin310st/cloudflare-tools.git
+git clone https://github.com/investblog/cloudflare-tools.git
 cd cloudflare-tools
 
 # Install dependencies
@@ -107,7 +107,7 @@ cloudflare-tools/
 - All requests go directly to Cloudflare API
 - Credentials are encrypted locally with your master password
 - No analytics, no external scripts
-- [Full Privacy Policy](./privacy.html)
+- [Full Privacy Policy](https://investblog.github.io/cloudflare-tools/privacy.html)
 
 ## License
 
@@ -117,4 +117,4 @@ MIT
 
 - [301.st](https://301.st) — Advanced domain management
 - [Cloudflare API Docs](https://developers.cloudflare.com/api/)
-- [Report Issues](https://github.com/admin310st/cloudflare-tools/issues)
+- [Report Issues](https://github.com/investblog/cloudflare-tools/issues)
