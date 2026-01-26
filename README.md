@@ -43,7 +43,7 @@ npm run dev
 
 Load the extension:
 - **Chrome**: `chrome://extensions` → Developer Mode → Load unpacked → select `dist/chrome-mv3`
-- **Firefox**: `about:debugging` → Load Temporary Add-on → select `dist/firefox-mv3/manifest.json`
+- **Firefox**: `about:debugging` → Load Temporary Add-on → select `dist/firefox-mv2/manifest.json`
 
 ## Usage
 
