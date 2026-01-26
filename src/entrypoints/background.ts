@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 async function loadSettings(): Promise<Settings> {
-  const stored = await chrome.storage.local.get(SETTINGS_KEY);
+  const stored = await chrome.storage.local.get(SETTINGS_KEY) || {};
   return { ...DEFAULT_SETTINGS, ...stored[SETTINGS_KEY] };
 }
 
