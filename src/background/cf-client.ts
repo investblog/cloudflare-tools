@@ -190,9 +190,15 @@ export class CFClient {
       if (!data.success) {
         const error = data.errors[0];
         const retryAfterHeader = response.headers.get('Retry-After');
+
+        // Extract detailed message from error_chain if available
+        const detailedMessage = error?.error_chain?.[0]?.message
+          ?? error?.message
+          ?? 'Unknown error';
+
         const normalized = normalizeError(
           error?.code ?? response.status,
-          error?.message ?? 'Unknown error',
+          detailedMessage,
           retryAfterHeader ?? undefined
         );
 
@@ -259,9 +265,15 @@ export class CFClient {
       if (!data.success) {
         const error = data.errors[0];
         const retryAfterHeader = response.headers.get('Retry-After');
+
+        // Extract detailed message from error_chain if available
+        const detailedMessage = error?.error_chain?.[0]?.message
+          ?? error?.message
+          ?? 'Unknown error';
+
         const normalized = normalizeError(
           error?.code ?? response.status,
-          error?.message ?? 'Unknown error',
+          detailedMessage,
           retryAfterHeader ?? undefined
         );
 

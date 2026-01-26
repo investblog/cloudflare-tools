@@ -68,6 +68,7 @@ export interface CFApiResponse<T> {
 export interface CFApiError {
   code: number;
   message: string;
+  error_chain?: CFApiError[];
 }
 
 export interface CFPaginationInfo {
