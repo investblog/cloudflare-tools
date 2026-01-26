@@ -11,10 +11,10 @@ Browser extension for bulk operations with Cloudflare zones. Add hundreds of dom
 - **Preflight Check** — See which domains will be created, skipped, or are invalid before starting
 
 ### Security
-- **Encrypted Vault** — Argon2id KDF + AES-256-GCM encryption
-- **Master Password** — Your credentials never stored in plaintext
-- **Auto-lock** — Configurable timeout (1-60 minutes)
-- **Session Persistence** — Stays unlocked during browser session, locks on browser close
+- **Encrypted Vault** — AES-256-GCM with random 256-bit key
+- **Session-only** — Encryption key stored in session storage, cleared on browser close
+- **No passwords** — Credentials auto-available during session, re-enter on browser restart
+- **Isolated storage** — Extension storage not accessible by websites or other extensions
 
 ### UX
 - **Side Panel UI** — Full interface in browser sidebar
@@ -49,10 +49,11 @@ Load the extension:
 
 1. Click the extension icon to open Side Panel
 2. Enter your Cloudflare email and Global API Key
-3. Set a master password (encrypts credentials locally)
-4. Select operation: Create, Delete, or Purge
-5. For Create: paste domains → Check first → Start
-6. For Delete/Purge: select account → select zones → confirm
+3. Select operation: Create, Delete, or Purge
+4. For Create: paste domains → Check first → Start
+5. For Delete/Purge: select account → select zones → confirm
+
+> **Note**: Credentials are encrypted and stored locally. You'll need to re-enter them after closing the browser.
 
 ### Getting Your Global API Key
 
@@ -63,8 +64,8 @@ Load the extension:
 
 - **Framework**: [WXT](https://wxt.dev/) (Manifest V3)
 - **Language**: TypeScript
-- **Encryption**: [hash-wasm](https://github.com/nickreese/hash-wasm) (Argon2id) + Web Crypto API
-- **Storage**: IndexedDB (tasks), chrome.storage.local (vault), chrome.storage.session (unlock state)
+- **Encryption**: Web Crypto API (AES-256-GCM)
+- **Storage**: IndexedDB (tasks), chrome.storage.local (encrypted vault), chrome.storage.session (key)
 - **UI**: Vanilla DOM + CSS (based on 301.st design system)
 
 ## Project Structure
@@ -125,7 +126,7 @@ npm run typecheck    # TypeScript check
 
 - **No data collection** — Zero analytics, zero tracking
 - **Direct API calls** — Requests go straight to api.cloudflare.com
-- **Local encryption** — Credentials encrypted with your master password
+- **Local encryption** — Credentials encrypted with AES-256-GCM, key in session storage
 - **Open source** — Full code available for audit
 
 [Full Privacy Policy](public/privacy.html)
