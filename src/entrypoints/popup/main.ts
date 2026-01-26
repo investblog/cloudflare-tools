@@ -96,21 +96,28 @@ function setButtonLoading(button: HTMLButtonElement, loading: boolean): void {
 
 async function openSidePanel(): Promise<void> {
   try {
+    // Firefox: use sidebarAction API
+    if (typeof browser !== 'undefined' && browser.sidebarAction) {
+      await browser.sidebarAction.open();
+      window.close();
+      return;
+    }
+
+    // Chrome: use sidePanel API
     if (chrome.sidePanel) {
-      // Get the active tab to open side panel for it
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
         await chrome.sidePanel.open({ tabId: tab.id });
       } else {
-        // Fallback to windowId if no active tab
         const currentWindow = await chrome.windows.getCurrent();
         await chrome.sidePanel.open({ windowId: currentWindow.id! });
       }
       window.close();
-    } else {
-      // Fallback: open panel in new tab
-      chrome.tabs.create({ url: chrome.runtime.getURL('sidepanel.html') });
+      return;
     }
+
+    // Fallback: open panel in new tab
+    chrome.tabs.create({ url: chrome.runtime.getURL('sidepanel.html') });
   } catch (error) {
     console.error('[CF Tools] Failed to open side panel:', error);
     // Fallback
