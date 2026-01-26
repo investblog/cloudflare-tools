@@ -1274,6 +1274,15 @@ function initNavigation(): void {
         tab.classList.add('is-active');
         showView(tabName);
 
+        // Load data when switching tabs (if account selected)
+        if (selectedAccountId) {
+          if (tabName === 'delete' && deleteZones.length === 0) {
+            loadZonesForDelete(selectedAccountId);
+          } else if (tabName === 'purge' && purgeZones.length === 0) {
+            loadZonesForPurge(selectedAccountId);
+          }
+        }
+
         // Load settings when switching to settings tab
         if (tabName === 'settings') {
           loadSettings();
