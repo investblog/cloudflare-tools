@@ -127,11 +127,12 @@
               <span>Import existing DNS records from domain</span>
             </label>
             <div class="form-group">
-              <label for="zone-type">Type</label>
+              <label for="zone-type">Zone type</label>
               <select id="zone-type" name="type" class="input">
-                <option value="full" selected>Full (Cloudflare nameservers)</option>
-                <option value="partial">Partial (CNAME setup)</option>
+                <option value="full" selected>Full</option>
+                <option value="partial">Partial (CNAME)</option>
               </select>
+              <p class="form-hint">Full — change nameservers to Cloudflare. Partial — keep current NS, proxy via CNAME (Business+ plans only).</p>
             </div>
           </fieldset>
 
