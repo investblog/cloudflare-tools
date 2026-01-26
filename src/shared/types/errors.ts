@@ -32,9 +32,16 @@ export interface NormalizedError {
  * Known Cloudflare error codes
  */
 export const CF_ERROR_CODES = {
-  // Auth errors
+  // Auth errors (various codes CF uses for credential issues)
   INVALID_CREDENTIALS: 10000,
   INVALID_TOKEN: 10001,
+  INVALID_REQUEST_HEADERS: 6003,
+  INVALID_AUTH_KEY_FORMAT: 6100,
+  INVALID_AUTH_EMAIL_FORMAT: 6101,
+  MISSING_AUTH_EMAIL: 6102,
+  MISSING_AUTH_KEY: 6103,
+  UNKNOWN_AUTH_KEY: 9103,
+  INVALID_AUTH_HEADER: 9106,
 
   // Validation errors
   ZONE_ALREADY_EXISTS: 1061,
@@ -46,6 +53,21 @@ export const CF_ERROR_CODES = {
   // Rate limit
   RATE_LIMITED: 429,
 } as const;
+
+/**
+ * Auth-related error codes
+ */
+const AUTH_ERROR_CODES: Set<number> = new Set([
+  CF_ERROR_CODES.INVALID_CREDENTIALS,
+  CF_ERROR_CODES.INVALID_TOKEN,
+  CF_ERROR_CODES.INVALID_REQUEST_HEADERS,
+  CF_ERROR_CODES.INVALID_AUTH_KEY_FORMAT,
+  CF_ERROR_CODES.INVALID_AUTH_EMAIL_FORMAT,
+  CF_ERROR_CODES.MISSING_AUTH_EMAIL,
+  CF_ERROR_CODES.MISSING_AUTH_KEY,
+  CF_ERROR_CODES.UNKNOWN_AUTH_KEY,
+  CF_ERROR_CODES.INVALID_AUTH_HEADER,
+]);
 
 /**
  * Map CF error code to normalized error
@@ -73,8 +95,8 @@ export function normalizeError(
   // Ensure code is a number for remaining checks
   const numCode = typeof code === 'number' ? code : parseInt(code, 10) || 0;
 
-  // Auth errors
-  if (numCode === CF_ERROR_CODES.INVALID_CREDENTIALS || numCode === CF_ERROR_CODES.INVALID_TOKEN) {
+  // Auth errors (check against all known auth codes)
+  if (AUTH_ERROR_CODES.has(numCode)) {
     return {
       category: 'auth',
       code: numCode,
@@ -126,17 +148,6 @@ export function normalizeError(
       message: message || 'Server error',
       recommendation: 'Retrying automatically...',
       retryable: true,
-    };
-  }
-
-  // Permission errors
-  if (numCode === CF_ERROR_CODES.INVALID_TOKEN) {
-    return {
-      category: 'permission',
-      code: numCode,
-      message,
-      recommendation: 'API key lacks required permissions',
-      retryable: false,
     };
   }
 
