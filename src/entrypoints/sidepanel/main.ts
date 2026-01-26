@@ -215,6 +215,9 @@ let currentBatchId: string | null = null;
 let batchStartTime: number | null = null;
 let preflightResults: PreflightResult[] = [];
 
+// Account selection (shared across tabs)
+let selectedAccountId: string | null = null;
+
 // Delete/Purge view state
 let deleteZones: CFZone[] = [];
 let purgeZones: CFZone[] = [];
@@ -225,6 +228,18 @@ let purgeCurrentPage = 1;
 const ZONES_PER_PAGE = 50;
 
 /**
+ * Sync all account selectors to the same value.
+ */
+function syncAccountSelectors(accountId: string | null): void {
+  selectedAccountId = accountId;
+
+  const selectors = document.querySelectorAll('select[name="account"]');
+  selectors.forEach((select) => {
+    (select as HTMLSelectElement).value = accountId ?? '';
+  });
+}
+
+/**
  * Reset all panel state on disconnect/logout.
  * Clears accounts, zones, selections, and UI elements.
  */
@@ -232,6 +247,7 @@ function resetPanelState(): void {
   // Reset state variables
   isUnlocked = false;
   currentAccounts = [];
+  selectedAccountId = null;
   deleteZones = [];
   purgeZones = [];
   selectedDeleteZones.clear();
@@ -366,6 +382,13 @@ function populateAccountSelectors(accounts: CFAccount[]): void {
       select.appendChild(option);
     });
   });
+
+  // Auto-select if only one account, or restore previous selection
+  if (accounts.length === 1) {
+    syncAccountSelectors(accounts[0].id);
+  } else if (selectedAccountId && accounts.some(a => a.id === selectedAccountId)) {
+    syncAccountSelectors(selectedAccountId);
+  }
 }
 
 function showError(container: string, message: string): void {
@@ -438,6 +461,11 @@ function initCreateView(): void {
   const accountSelect = document.getElementById('account-select') as HTMLSelectElement;
 
   if (!checkBtn || !startBtn || !textarea || !accountSelect) return;
+
+  // Sync account selection across all tabs
+  accountSelect.addEventListener('change', () => {
+    syncAccountSelectors(accountSelect.value || null);
+  });
 
   // Check First button
   checkBtn.addEventListener('click', async () => {
@@ -643,6 +671,7 @@ function initDeleteView(): void {
 
   accountSelect.addEventListener('change', () => {
     const accountId = accountSelect.value;
+    syncAccountSelectors(accountId || null);
     if (accountId) {
       loadZonesForDelete(accountId);
     }
@@ -745,6 +774,7 @@ function initPurgeView(): void {
 
   accountSelect.addEventListener('change', () => {
     const accountId = accountSelect.value;
+    syncAccountSelectors(accountId || null);
     if (accountId) {
       loadZonesForPurge(accountId);
     }
