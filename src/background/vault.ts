@@ -46,25 +46,43 @@ const STORAGE_KEY_SESSION = 'cf_vault_key';
 // Session Storage Helper (Firefox MV2 doesn't have chrome.storage.session)
 // ============================================================================
 
+// Check if session storage is available (Chrome MV3 only)
+const hasSessionStorage = typeof chrome !== 'undefined'
+  && chrome.storage
+  && 'session' in chrome.storage;
+
 const sessionStorage = {
   async get(key: string): Promise<Record<string, string | undefined>> {
-    if (chrome.storage.session) {
-      return chrome.storage.session.get(key);
+    if (hasSessionStorage) {
+      try {
+        const result = await chrome.storage.session.get(key);
+        return result || {};
+      } catch (e) {
+        console.log('[Vault] Session storage get failed:', e);
+      }
     }
     // Fallback: no persistence (memory only handled by Vault class)
     return {};
   },
 
   async set(data: Record<string, string>): Promise<void> {
-    if (chrome.storage.session) {
-      await chrome.storage.session.set(data);
+    if (hasSessionStorage) {
+      try {
+        await chrome.storage.session.set(data);
+      } catch (e) {
+        console.log('[Vault] Session storage set failed:', e);
+      }
     }
     // Fallback: no-op (key stays in memory only)
   },
 
   async remove(key: string): Promise<void> {
-    if (chrome.storage.session) {
-      await chrome.storage.session.remove(key);
+    if (hasSessionStorage) {
+      try {
+        await chrome.storage.session.remove(key);
+      } catch (e) {
+        console.log('[Vault] Session storage remove failed:', e);
+      }
     }
     // Fallback: no-op
   },
@@ -85,13 +103,13 @@ export class Vault {
    */
   async init(): Promise<void> {
     // Load stored vault from local storage
-    const local = await chrome.storage.local.get(STORAGE_KEY_VAULT);
+    const local = await chrome.storage.local.get(STORAGE_KEY_VAULT) || {};
     if (local[STORAGE_KEY_VAULT]) {
       this.storedVault = local[STORAGE_KEY_VAULT];
     }
 
     // Try to restore key from session storage (or in-memory for Firefox)
-    const session = await sessionStorage.get(STORAGE_KEY_SESSION);
+    const session = await sessionStorage.get(STORAGE_KEY_SESSION) || {};
     const storedKey = session[STORAGE_KEY_SESSION] || this.keyBase64;
 
     if (storedKey && this.storedVault) {
