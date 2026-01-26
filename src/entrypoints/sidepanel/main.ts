@@ -307,6 +307,9 @@ function resetPanelState(): void {
     tab.classList.toggle('is-active', i === 0);
   });
 
+  // Update auth toggle button to show login icon
+  updateAuthToggleButton();
+
   console.log('[CF Tools] Panel state reset');
 }
 
@@ -340,11 +343,8 @@ function showView(viewName: ViewName): void {
     (nav as HTMLElement).hidden = ['auth', 'progress', 'results'].includes(viewName);
   }
 
-  // Show/hide lock button
-  const lockBtn = document.querySelector('[data-action="lock"]') as HTMLElement;
-  if (lockBtn) {
-    lockBtn.hidden = !isUnlocked;
-  }
+  // Update auth toggle button (login/lock icon)
+  updateAuthToggleButton();
 }
 
 let currentEmail: string | undefined;
@@ -362,6 +362,30 @@ function updateStatus(connected: boolean, email?: string): void {
   const emailEl = document.querySelector('[data-current-email]');
   if (emailEl) {
     emailEl.textContent = connected && email ? email : 'Not connected';
+  }
+}
+
+/**
+ * Update auth toggle button - shows login icon when not authenticated,
+ * lock icon when authenticated.
+ */
+function updateAuthToggleButton(): void {
+  const btn = document.querySelector('[data-action="auth-toggle"]') as HTMLButtonElement;
+  if (!btn) return;
+
+  const loginIcon = btn.querySelector('[data-icon="login"]') as HTMLElement | null;
+  const lockIcon = btn.querySelector('[data-icon="lock"]') as HTMLElement | null;
+
+  if (isUnlocked) {
+    // Show lock icon
+    if (loginIcon) loginIcon.style.display = 'none';
+    if (lockIcon) lockIcon.style.display = '';
+    btn.title = 'Disconnect';
+  } else {
+    // Show login icon
+    if (loginIcon) loginIcon.style.display = '';
+    if (lockIcon) lockIcon.style.display = 'none';
+    btn.title = 'Login';
   }
 }
 
@@ -1291,16 +1315,23 @@ function initNavigation(): void {
     });
   });
 
-  // Lock button - logs out and shows auth form
-  const lockBtn = document.querySelector('[data-action="lock"]');
-  lockBtn?.addEventListener('click', async () => {
-    try {
-      await sendMessage({ type: 'VAULT_LOCK' });
-      resetPanelState();
+  // Auth toggle button - login when not authenticated, lock when authenticated
+  const authToggleBtn = document.querySelector('[data-action="auth-toggle"]');
+  authToggleBtn?.addEventListener('click', async () => {
+    if (isUnlocked) {
+      // Lock vault
+      try {
+        await sendMessage({ type: 'VAULT_LOCK' });
+        resetPanelState();
+        showView('auth');
+        updateStatus(false);
+        updateAuthToggleButton();
+      } catch (error) {
+        console.error('[CF Tools] Failed to lock:', error);
+      }
+    } else {
+      // Navigate to auth view
       showView('auth');
-      updateStatus(false);
-    } catch (error) {
-      console.error('[CF Tools] Failed to lock:', error);
     }
   });
 }
