@@ -197,7 +197,7 @@ function handleVaultLockedError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('VAULT_LOCKED') || message.includes('Vault is locked')) {
     console.log('[CF Tools] Vault locked, showing auth view');
-    isUnlocked = false;
+    resetPanelState();
     showView('auth');
     updateStatus(false);
     return true;
@@ -223,6 +223,76 @@ let selectedPurgeZones = new Set<string>();
 let deleteCurrentPage = 1;
 let purgeCurrentPage = 1;
 const ZONES_PER_PAGE = 50;
+
+/**
+ * Reset all panel state on disconnect/logout.
+ * Clears accounts, zones, selections, and UI elements.
+ */
+function resetPanelState(): void {
+  // Reset state variables
+  isUnlocked = false;
+  currentAccounts = [];
+  deleteZones = [];
+  purgeZones = [];
+  selectedDeleteZones.clear();
+  selectedPurgeZones.clear();
+  preflightResults = [];
+  deleteCurrentPage = 1;
+  purgeCurrentPage = 1;
+
+  // Clear account selectors
+  const selectors = document.querySelectorAll('select[name="account"]');
+  selectors.forEach((select) => {
+    while (select.children.length > 1) {
+      select.removeChild(select.lastChild!);
+    }
+    (select as HTMLSelectElement).value = '';
+  });
+
+  // Clear zone lists
+  document.querySelectorAll('.zone-item').forEach((el) => el.remove());
+
+  // Reset selection counts
+  document.querySelectorAll('[data-selected-count]').forEach((el) => {
+    el.textContent = '0';
+  });
+
+  // Hide loading and empty states
+  document.querySelectorAll('[data-loading]').forEach((el) => {
+    (el as HTMLElement).hidden = true;
+  });
+  document.querySelectorAll('[data-empty]').forEach((el) => {
+    (el as HTMLElement).hidden = true;
+  });
+
+  // Clear domain input and preflight
+  const domainInput = document.getElementById('domains-input') as HTMLTextAreaElement;
+  if (domainInput) domainInput.value = '';
+
+  const domainCount = document.querySelector('[data-domain-count]');
+  if (domainCount) domainCount.textContent = '0';
+
+  const preflightEl = document.querySelector('[data-preflight]') as HTMLElement;
+  if (preflightEl) preflightEl.hidden = true;
+
+  // Reset action buttons
+  const startCreateBtn = document.querySelector('[data-action="start-create"]') as HTMLButtonElement;
+  if (startCreateBtn) startCreateBtn.disabled = true;
+
+  const startDeleteBtn = document.querySelector('[data-action="start-delete"]') as HTMLButtonElement;
+  if (startDeleteBtn) startDeleteBtn.disabled = true;
+
+  const startPurgeBtn = document.querySelector('[data-action="start-purge"]') as HTMLButtonElement;
+  if (startPurgeBtn) startPurgeBtn.disabled = true;
+
+  // Reset navigation to first tab
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach((tab, i) => {
+    tab.classList.toggle('is-active', i === 0);
+  });
+
+  console.log('[CF Tools] Panel state reset');
+}
 
 // ============================================================================
 // View Management
@@ -1075,7 +1145,7 @@ function initSettingsView(): void {
 
     try {
       await sendMessage({ type: 'VAULT_CLEAR' });
-      isUnlocked = false;
+      resetPanelState();
       showView('auth');
       updateStatus(false);
     } catch (error) {
@@ -1097,7 +1167,7 @@ function initSettingsView(): void {
 
     try {
       await sendMessage({ type: 'VAULT_CLEAR' });
-      isUnlocked = false;
+      resetPanelState();
       showView('auth');
       updateStatus(false);
     } catch (error) {
@@ -1127,7 +1197,7 @@ function initResetVault(): void {
 
     try {
       await sendMessage({ type: 'VAULT_CLEAR' });
-      isUnlocked = false;
+      resetPanelState();
       showView('auth');
       updateStatus(false);
     } catch (error) {
@@ -1187,7 +1257,7 @@ function initNavigation(): void {
   lockBtn?.addEventListener('click', async () => {
     try {
       await sendMessage({ type: 'VAULT_LOCK' });
-      isUnlocked = false;
+      resetPanelState();
       showView('auth');
       updateStatus(false);
     } catch (error) {
@@ -1277,7 +1347,7 @@ function initDomainInput(): void {
 function initBackgroundEvents(): void {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === 'VAULT_LOCKED') {
-      isUnlocked = false;
+      resetPanelState();
       showView('auth');
       updateStatus(false);
     }
