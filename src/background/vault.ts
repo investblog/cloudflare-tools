@@ -43,6 +43,34 @@ const STORAGE_KEY_VAULT = 'cf_vault';
 const STORAGE_KEY_SESSION = 'cf_vault_key';
 
 // ============================================================================
+// Session Storage Helper (Firefox MV2 doesn't have chrome.storage.session)
+// ============================================================================
+
+const sessionStorage = {
+  async get(key: string): Promise<Record<string, string | undefined>> {
+    if (chrome.storage.session) {
+      return chrome.storage.session.get(key);
+    }
+    // Fallback: no persistence (memory only handled by Vault class)
+    return {};
+  },
+
+  async set(data: Record<string, string>): Promise<void> {
+    if (chrome.storage.session) {
+      await chrome.storage.session.set(data);
+    }
+    // Fallback: no-op (key stays in memory only)
+  },
+
+  async remove(key: string): Promise<void> {
+    if (chrome.storage.session) {
+      await chrome.storage.session.remove(key);
+    }
+    // Fallback: no-op
+  },
+};
+
+// ============================================================================
 // Vault Class
 // ============================================================================
 
@@ -50,6 +78,7 @@ export class Vault {
   private encryptionKey: CryptoKey | null = null;
   private credentials: Credentials | null = null;
   private storedVault: StoredVault | null = null;
+  private keyBase64: string | null = null; // In-memory fallback for Firefox
 
   /**
    * Initialize vault - restore from session if available.
@@ -61,11 +90,13 @@ export class Vault {
       this.storedVault = local[STORAGE_KEY_VAULT];
     }
 
-    // Try to restore key from session storage
-    const session = await chrome.storage.session.get(STORAGE_KEY_SESSION);
-    if (session[STORAGE_KEY_SESSION] && this.storedVault) {
+    // Try to restore key from session storage (or in-memory for Firefox)
+    const session = await sessionStorage.get(STORAGE_KEY_SESSION);
+    const storedKey = session[STORAGE_KEY_SESSION] || this.keyBase64;
+
+    if (storedKey && this.storedVault) {
       try {
-        const keyData = this.base64ToArray(session[STORAGE_KEY_SESSION]);
+        const keyData = this.base64ToArray(storedKey);
         this.encryptionKey = await crypto.subtle.importKey(
           'raw',
           keyData.buffer as ArrayBuffer,
@@ -88,9 +119,10 @@ export class Vault {
       } catch (error) {
         console.log('[Vault] Failed to restore from session:', error);
         // Clear invalid session
-        await chrome.storage.session.remove(STORAGE_KEY_SESSION);
+        await sessionStorage.remove(STORAGE_KEY_SESSION);
         this.encryptionKey = null;
         this.credentials = null;
+        this.keyBase64 = null;
       }
     }
   }
@@ -118,10 +150,11 @@ export class Vault {
       ['encrypt', 'decrypt']
     );
 
-    // Export key for session storage
+    // Export key for session storage (or memory for Firefox MV2)
     const keyData = await crypto.subtle.exportKey('raw', this.encryptionKey);
-    await chrome.storage.session.set({
-      [STORAGE_KEY_SESSION]: this.arrayToBase64(new Uint8Array(keyData)),
+    this.keyBase64 = this.arrayToBase64(new Uint8Array(keyData));
+    await sessionStorage.set({
+      [STORAGE_KEY_SESSION]: this.keyBase64,
     });
 
     // Encrypt API key
@@ -152,7 +185,8 @@ export class Vault {
   async lock(): Promise<void> {
     this.encryptionKey = null;
     this.credentials = null;
-    await chrome.storage.session.remove(STORAGE_KEY_SESSION);
+    this.keyBase64 = null;
+    await sessionStorage.remove(STORAGE_KEY_SESSION);
     console.log('[Vault] Locked');
   }
 
