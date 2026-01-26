@@ -30,28 +30,15 @@ export interface VaultStatusResponse {
   email?: string;
 }
 
-export interface VaultInitRequest {
-  type: 'VAULT_INIT';
+export interface VaultSetupRequest {
+  type: 'VAULT_SETUP';
   payload: {
     email: string;
     apiKey: string;
-    masterPassword: string;
   };
 }
 
-export interface VaultInitResponse {
-  user: CFUser;
-  accounts: CFAccount[];
-}
-
-export interface VaultUnlockRequest {
-  type: 'VAULT_UNLOCK';
-  payload: {
-    masterPassword: string;
-  };
-}
-
-export interface VaultUnlockResponse {
+export interface VaultSetupResponse {
   user: CFUser;
   accounts: CFAccount[];
 }
@@ -61,18 +48,6 @@ export interface VaultLockRequest {
 }
 
 export interface VaultLockResponse {
-  success: true;
-}
-
-export interface VaultChangePasswordRequest {
-  type: 'VAULT_CHANGE_PASSWORD';
-  payload: {
-    oldPassword: string;
-    newPassword: string;
-  };
-}
-
-export interface VaultChangePasswordResponse {
   success: true;
 }
 
@@ -239,10 +214,8 @@ export interface GetSettingsRequest {
 }
 
 export interface Settings {
-  autoLockTimeoutMinutes: number;
   maxConcurrency: number;
   enableDashboardButtons: boolean;
-  lockOnUnload: boolean;
 }
 
 export interface GetSettingsResponse {
@@ -304,10 +277,8 @@ export interface IncompleteBatchesEvent {
 
 export type RequestMessage =
   | VaultStatusRequest
-  | VaultInitRequest
-  | VaultUnlockRequest
+  | VaultSetupRequest
   | VaultLockRequest
-  | VaultChangePasswordRequest
   | VaultClearRequest
   | GetAccountsRequest
   | GetZonesRequest
@@ -336,10 +307,8 @@ export type BackgroundEvent =
 
 type ResponseMap = {
   VAULT_STATUS: VaultStatusResponse;
-  VAULT_INIT: VaultInitResponse;
-  VAULT_UNLOCK: VaultUnlockResponse;
+  VAULT_SETUP: VaultSetupResponse;
   VAULT_LOCK: VaultLockResponse;
-  VAULT_CHANGE_PASSWORD: VaultChangePasswordResponse;
   VAULT_CLEAR: VaultClearResponse;
   GET_ACCOUNTS: GetAccountsResponse;
   GET_ZONES: GetZonesResponse;

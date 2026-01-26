@@ -75,60 +75,11 @@
               </p>
             </div>
 
-            <div class="form-group">
-              <label for="master-password">Master Password</label>
-              <input
-                type="password"
-                id="master-password"
-                name="masterPassword"
-                class="input"
-                placeholder="Encrypt your credentials"
-                required
-                minlength="8"
-              />
-              <p class="form-hint">
-                Used to encrypt your API key locally. You'll need this to unlock.
-              </p>
-            </div>
-
             <button type="submit" class="btn btn--primary btn--block">
               Connect
             </button>
 
             <p class="auth-error" data-auth-error hidden></p>
-          </form>
-        </section>
-
-        <!-- Unlock View -->
-        <section class="view view--unlock" data-view-content="unlock" hidden>
-          <form class="auth-form" data-form="unlock">
-            <div class="unlock-header">
-              <h2>Unlock Vault</h2>
-              <p class="form-hint">Enter your master password to continue.</p>
-            </div>
-
-            <div class="form-group">
-              <label for="unlock-password">Master Password</label>
-              <input
-                type="password"
-                id="unlock-password"
-                name="masterPassword"
-                class="input"
-                placeholder="Enter master password"
-                required
-                autofocus
-              />
-            </div>
-
-            <button type="submit" class="btn btn--primary btn--block">
-              Unlock
-            </button>
-
-            <p class="auth-error" data-unlock-error hidden></p>
-
-            <p class="form-hint" style="margin-top: var(--space-4); text-align: center;">
-              <a href="#" data-action="reset-vault">Use different credentials</a>
-            </p>
           </form>
         </section>
 
@@ -386,29 +337,6 @@
             <p class="form-hint">
               Clear credentials to login with a different Cloudflare account.
             </p>
-          </div>
-
-          <div class="settings-section">
-            <h3>Security</h3>
-            <div class="form-group">
-              <label for="auto-lock-timeout">Auto-lock timeout</label>
-              <select id="auto-lock-timeout" name="autoLockTimeout" class="input">
-                <option value="1">1 minute</option>
-                <option value="5">5 minutes</option>
-                <option value="15" selected>15 minutes</option>
-                <option value="30">30 minutes</option>
-                <option value="60">60 minutes</option>
-              </select>
-            </div>
-
-            <label class="checkbox">
-              <input type="checkbox" name="lockOnUnload" checked />
-              <span>Lock on browser close</span>
-            </label>
-
-            <button class="btn btn--ghost" data-action="change-password">
-              Change Master Password
-            </button>
           </div>
 
           <div class="settings-section">

@@ -196,9 +196,9 @@ function showPromptDialog(options: DialogOptions): Promise<string | null> {
 function handleVaultLockedError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('VAULT_LOCKED') || message.includes('Vault is locked')) {
-    console.log('[CF Tools] Vault locked, showing unlock view');
+    console.log('[CF Tools] Vault locked, showing auth view');
     isUnlocked = false;
-    showView('unlock');
+    showView('auth');
     updateStatus(false);
     return true;
   }
@@ -228,7 +228,7 @@ const ZONES_PER_PAGE = 50;
 // View Management
 // ============================================================================
 
-type ViewName = 'auth' | 'unlock' | 'create' | 'delete' | 'purge' | 'progress' | 'results' | 'settings';
+type ViewName = 'auth' | 'create' | 'delete' | 'purge' | 'progress' | 'results' | 'settings';
 
 function showView(viewName: ViewName): void {
   // Hide all views
@@ -248,10 +248,10 @@ function showView(viewName: ViewName): void {
     panel.setAttribute('data-view', viewName);
   }
 
-  // Show/hide navigation (hide for auth, unlock, progress, results)
+  // Show/hide navigation (hide for auth, progress, results)
   const nav = document.querySelector('.panel__nav');
   if (nav) {
-    (nav as HTMLElement).hidden = ['auth', 'unlock', 'progress', 'results'].includes(viewName);
+    (nav as HTMLElement).hidden = ['auth', 'progress', 'results'].includes(viewName);
   }
 
   // Show/hide lock button
@@ -1006,12 +1006,6 @@ async function loadSettings(): Promise<void> {
   try {
     const { settings } = await sendMessage({ type: 'GET_SETTINGS' });
 
-    // Auto-lock timeout
-    const timeoutSelect = document.getElementById('auto-lock-timeout') as HTMLSelectElement;
-    if (timeoutSelect) {
-      timeoutSelect.value = String(settings.autoLockTimeoutMinutes);
-    }
-
     // Max concurrency
     const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
     if (concurrencySelect) {
@@ -1022,12 +1016,6 @@ async function loadSettings(): Promise<void> {
     const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
     if (dashboardCheckbox) {
       dashboardCheckbox.checked = settings.enableDashboardButtons;
-    }
-
-    // Lock on unload
-    const lockOnUnloadCheckbox = document.querySelector('input[name="lockOnUnload"]') as HTMLInputElement;
-    if (lockOnUnloadCheckbox) {
-      lockOnUnloadCheckbox.checked = settings.lockOnUnload;
     }
 
     // Theme (stored locally, not in background)
@@ -1041,13 +1029,10 @@ async function loadSettings(): Promise<void> {
 }
 
 function initSettingsView(): void {
-  const timeoutSelect = document.getElementById('auto-lock-timeout') as HTMLSelectElement;
   const concurrencySelect = document.getElementById('max-concurrency') as HTMLSelectElement;
   const dashboardCheckbox = document.querySelector('input[name="enableDashboardButtons"]') as HTMLInputElement;
-  const lockOnUnloadCheckbox = document.querySelector('input[name="lockOnUnload"]') as HTMLInputElement;
   const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
   const clearDataBtn = document.querySelector('[data-action="clear-all-data"]') as HTMLButtonElement;
-  const changePasswordBtn = document.querySelector('[data-action="change-password"]') as HTMLButtonElement;
 
   // Theme change (stored locally)
   themeSelect?.addEventListener('change', () => {
@@ -1058,17 +1043,11 @@ function initSettingsView(): void {
   const saveSettings = async () => {
     const settings: Partial<Settings> = {};
 
-    if (timeoutSelect) {
-      settings.autoLockTimeoutMinutes = parseInt(timeoutSelect.value, 10);
-    }
     if (concurrencySelect) {
       settings.maxConcurrency = parseInt(concurrencySelect.value, 10);
     }
     if (dashboardCheckbox) {
       settings.enableDashboardButtons = dashboardCheckbox.checked;
-    }
-    if (lockOnUnloadCheckbox) {
-      settings.lockOnUnload = lockOnUnloadCheckbox.checked;
     }
 
     try {
@@ -1082,10 +1061,8 @@ function initSettingsView(): void {
     }
   };
 
-  timeoutSelect?.addEventListener('change', saveSettings);
   concurrencySelect?.addEventListener('change', saveSettings);
   dashboardCheckbox?.addEventListener('change', saveSettings);
-  lockOnUnloadCheckbox?.addEventListener('change', saveSettings);
 
   clearDataBtn?.addEventListener('click', async () => {
     const confirmed = await showConfirmDialog({
@@ -1129,45 +1106,6 @@ function initSettingsView(): void {
     }
   });
 
-  changePasswordBtn?.addEventListener('click', async () => {
-    const oldPassword = await showPromptDialog({
-      title: 'Change Password',
-      message: 'Enter current master password:',
-      inputType: 'password',
-    });
-    if (!oldPassword) return;
-
-    const newPassword = await showPromptDialog({
-      title: 'Change Password',
-      message: 'Enter new master password (min 8 characters):',
-      inputType: 'password',
-    });
-    if (!newPassword || newPassword.length < 8) {
-      await showAlertDialog('Password must be at least 8 characters', 'Invalid Password');
-      return;
-    }
-
-    const confirmPassword = await showPromptDialog({
-      title: 'Change Password',
-      message: 'Confirm new master password:',
-      inputType: 'password',
-    });
-    if (newPassword !== confirmPassword) {
-      await showAlertDialog('Passwords do not match', 'Mismatch');
-      return;
-    }
-
-    try {
-      await sendMessage({
-        type: 'VAULT_CHANGE_PASSWORD',
-        payload: { oldPassword, newPassword },
-      });
-      await showAlertDialog('Password changed successfully', 'Success');
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Change failed';
-      await showAlertDialog(msg, 'Error');
-    }
-  });
 }
 
 // ============================================================================
@@ -1206,13 +1144,9 @@ async function checkVaultStatus(): Promise<void> {
   try {
     const status = await sendMessage({ type: 'VAULT_STATUS' });
 
-    if (!status.isInitialized) {
-      // First time - show full auth form
+    if (!status.isUnlocked) {
+      // Not unlocked - show auth form (session expired or first time)
       showView('auth');
-      updateStatus(false);
-    } else if (!status.isUnlocked) {
-      // Locked - show unlock form
-      showView('unlock');
       updateStatus(false, status.email);
     } else {
       // Unlocked - load accounts and show main UI
@@ -1248,13 +1182,13 @@ function initNavigation(): void {
     });
   });
 
-  // Lock button
+  // Lock button - logs out and shows auth form
   const lockBtn = document.querySelector('[data-action="lock"]');
   lockBtn?.addEventListener('click', async () => {
     try {
       await sendMessage({ type: 'VAULT_LOCK' });
       isUnlocked = false;
-      showView('unlock');
+      showView('auth');
       updateStatus(false);
     } catch (error) {
       console.error('[CF Tools] Failed to lock:', error);
@@ -1291,12 +1225,11 @@ function initAuthForm(): void {
     const formData = new FormData(form);
     const email = formData.get('email') as string;
     const apiKey = formData.get('apiKey') as string;
-    const masterPassword = formData.get('masterPassword') as string;
 
     try {
       const { user, accounts } = await sendMessage({
-        type: 'VAULT_INIT',
-        payload: { email, apiKey, masterPassword },
+        type: 'VAULT_SETUP',
+        payload: { email, apiKey },
       });
 
       console.log('[CF Tools] Auth success:', user.email);
@@ -1309,42 +1242,6 @@ function initAuthForm(): void {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Authentication failed';
       showError('auth', message);
-    } finally {
-      setButtonLoading(submitBtn, false);
-    }
-  });
-}
-
-function initUnlockForm(): void {
-  const form = document.querySelector('[data-form="unlock"]') as HTMLFormElement;
-  if (!form) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideError('unlock');
-
-    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-    setButtonLoading(submitBtn, true);
-
-    const formData = new FormData(form);
-    const masterPassword = formData.get('masterPassword') as string;
-
-    try {
-      const { user, accounts } = await sendMessage({
-        type: 'VAULT_UNLOCK',
-        payload: { masterPassword },
-      });
-
-      console.log('[CF Tools] Unlock success:', user.email);
-
-      isUnlocked = true;
-      currentAccounts = accounts;
-      populateAccountSelectors(accounts);
-      updateStatus(true, user.email);
-      showView('create');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unlock failed';
-      showError('unlock', message);
     } finally {
       setButtonLoading(submitBtn, false);
     }
@@ -1381,7 +1278,7 @@ function initBackgroundEvents(): void {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === 'VAULT_LOCKED') {
       isUnlocked = false;
-      showView('unlock');
+      showView('auth');
       updateStatus(false);
     }
 
@@ -1408,7 +1305,6 @@ async function init(): Promise<void> {
   initThemeToggle();
   initNavigation();
   initAuthForm();
-  initUnlockForm();
   initDomainInput();
   initCreateView();
   initDeleteView();

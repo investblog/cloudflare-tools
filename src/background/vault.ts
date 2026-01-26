@@ -1,16 +1,17 @@
 /**
- * Encrypted Vault for Cloudflare credentials.
+ * Session-only Vault for Cloudflare credentials.
  *
- * Security:
- * - Argon2id KDF (t=3, m=65536, p=4) for key derivation
- * - AES-256-GCM for encryption
- * - Per-device salt stored in chrome.storage.local
- * - Derived key kept only in memory, cleared on lock
- * - Auto-lock after configurable timeout
- * - Unlock state is not persisted across service worker restarts
+ * Security model:
+ * - Random AES-256 key generated on setup
+ * - Encrypted credentials stored in chrome.storage.local
+ * - Encryption key stored in chrome.storage.session (cleared on browser close)
+ * - No passwords needed - simpler UX, same security isolation
+ *
+ * Flow:
+ * - Browser start: User enters email + API key
+ * - During session: Credentials available automatically
+ * - Browser close: Session cleared, need to re-enter credentials
  */
-
-import { argon2id } from 'hash-wasm';
 
 // ============================================================================
 // Types
@@ -27,17 +28,11 @@ export interface Credentials {
   apiKey: string;
 }
 
-export interface VaultConfig {
-  autoLockTimeoutMs: number;
-  lockOnUnload: boolean;
-}
-
 interface StoredVault {
   email: string;
   encryptedApiKey: string;
   iv: string;
-  salt: string;
-  version: 1;
+  version: 2; // v2 = session-only
 }
 
 // ============================================================================
@@ -45,42 +40,58 @@ interface StoredVault {
 // ============================================================================
 
 const STORAGE_KEY_VAULT = 'cf_vault';
-const STORAGE_KEY_CONFIG = 'cf_vault_config';
-const DEFAULT_CONFIG: VaultConfig = {
-  autoLockTimeoutMs: 15 * 60 * 1000, // 15 minutes
-  lockOnUnload: true,
-};
-
-// Argon2id parameters (OWASP recommended for interactive login)
-const ARGON2_ITERATIONS = 3;
-const ARGON2_MEMORY = 65536; // 64 MB
-const ARGON2_PARALLELISM = 4;
-const ARGON2_HASH_LENGTH = 32; // 256 bits for AES-256
+const STORAGE_KEY_SESSION = 'cf_vault_key';
 
 // ============================================================================
 // Vault Class
 // ============================================================================
 
 export class Vault {
-  private derivedKey: CryptoKey | null = null;
-  private decryptedCredentials: Credentials | null = null;
-  private config: VaultConfig = { ...DEFAULT_CONFIG };
-  private autoLockTimer: ReturnType<typeof setTimeout> | null = null;
+  private encryptionKey: CryptoKey | null = null;
+  private credentials: Credentials | null = null;
   private storedVault: StoredVault | null = null;
 
   /**
-   * Initialize vault and load config from storage.
+   * Initialize vault - restore from session if available.
    */
   async init(): Promise<void> {
-    // Load config and vault from local storage
-    const stored = await chrome.storage.local.get([STORAGE_KEY_CONFIG, STORAGE_KEY_VAULT]);
-
-    if (stored[STORAGE_KEY_CONFIG]) {
-      this.config = { ...DEFAULT_CONFIG, ...stored[STORAGE_KEY_CONFIG] };
+    // Load stored vault from local storage
+    const local = await chrome.storage.local.get(STORAGE_KEY_VAULT);
+    if (local[STORAGE_KEY_VAULT]) {
+      this.storedVault = local[STORAGE_KEY_VAULT];
     }
 
-    if (stored[STORAGE_KEY_VAULT]) {
-      this.storedVault = stored[STORAGE_KEY_VAULT];
+    // Try to restore key from session storage
+    const session = await chrome.storage.session.get(STORAGE_KEY_SESSION);
+    if (session[STORAGE_KEY_SESSION] && this.storedVault) {
+      try {
+        const keyData = this.base64ToArray(session[STORAGE_KEY_SESSION]);
+        this.encryptionKey = await crypto.subtle.importKey(
+          'raw',
+          keyData.buffer as ArrayBuffer,
+          { name: 'AES-GCM' },
+          false,
+          ['encrypt', 'decrypt']
+        );
+
+        // Decrypt credentials
+        const iv = this.base64ToArray(this.storedVault.iv);
+        const ciphertext = this.base64ToArray(this.storedVault.encryptedApiKey);
+        const apiKey = await this.decrypt(ciphertext, iv);
+
+        this.credentials = {
+          email: this.storedVault.email,
+          apiKey,
+        };
+
+        console.log('[Vault] Restored from session');
+      } catch (error) {
+        console.log('[Vault] Failed to restore from session:', error);
+        // Clear invalid session
+        await chrome.storage.session.remove(STORAGE_KEY_SESSION);
+        this.encryptionKey = null;
+        this.credentials = null;
+      }
     }
   }
 
@@ -90,33 +101,28 @@ export class Vault {
   getState(): VaultState {
     return {
       isInitialized: this.storedVault !== null,
-      isUnlocked: this.derivedKey !== null,
-      email: this.storedVault?.email,
+      isUnlocked: this.credentials !== null,
+      email: this.credentials?.email ?? this.storedVault?.email,
     };
   }
 
   /**
-   * Initialize vault with master password and credentials.
-   * Called on first setup.
+   * Setup vault with credentials.
+   * Generates random encryption key and stores encrypted credentials.
    */
-  async initialize(
-    masterPassword: string,
-    credentials: Credentials
-  ): Promise<void> {
-    // Generate random salt
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-
-    // Derive key using Argon2id
-    const derivedKeyBytes = await this.deriveKey(masterPassword, salt);
-
-    // Import as CryptoKey for Web Crypto API
-    this.derivedKey = await crypto.subtle.importKey(
-      'raw',
-      derivedKeyBytes,
-      { name: 'AES-GCM' },
-      false, // not extractable
+  async setup(credentials: Credentials): Promise<void> {
+    // Generate random AES-256 key
+    this.encryptionKey = await crypto.subtle.generateKey(
+      { name: 'AES-GCM', length: 256 },
+      true, // extractable for storage
       ['encrypt', 'decrypt']
     );
+
+    // Export key for session storage
+    const keyData = await crypto.subtle.exportKey('raw', this.encryptionKey);
+    await chrome.storage.session.set({
+      [STORAGE_KEY_SESSION]: this.arrayToBase64(new Uint8Array(keyData)),
+    });
 
     // Encrypt API key
     const { ciphertext, iv } = await this.encrypt(credentials.apiKey);
@@ -126,141 +132,28 @@ export class Vault {
       email: credentials.email,
       encryptedApiKey: this.arrayToBase64(ciphertext),
       iv: this.arrayToBase64(iv),
-      salt: this.arrayToBase64(salt),
-      version: 1,
+      version: 2,
     };
 
     await chrome.storage.local.set({
       [STORAGE_KEY_VAULT]: this.storedVault,
     });
 
-    // Keep decrypted credentials in memory
-    this.decryptedCredentials = credentials;
+    // Keep credentials in memory
+    this.credentials = credentials;
 
-    // Start auto-lock timer
-    this.resetAutoLockTimer();
+    console.log('[Vault] Setup complete');
   }
 
   /**
-   * Unlock vault with master password.
-   */
-  async unlock(masterPassword: string): Promise<boolean> {
-    if (!this.storedVault) {
-      throw new Error('Vault not initialized');
-    }
-
-    const salt = this.base64ToArray(this.storedVault.salt);
-
-    try {
-      // Derive key
-      const derivedKeyBytes = await this.deriveKey(masterPassword, salt);
-
-      this.derivedKey = await crypto.subtle.importKey(
-        'raw',
-        derivedKeyBytes,
-        { name: 'AES-GCM' },
-        false,
-        ['encrypt', 'decrypt']
-      );
-
-      // Try to decrypt - this validates the password
-      const iv = this.base64ToArray(this.storedVault.iv);
-      const ciphertext = this.base64ToArray(this.storedVault.encryptedApiKey);
-
-      const apiKey = await this.decrypt(ciphertext, iv);
-
-      this.decryptedCredentials = {
-        email: this.storedVault.email,
-        apiKey,
-      };
-
-      this.resetAutoLockTimer();
-      return true;
-    } catch {
-      // Wrong password - decryption failed
-      this.derivedKey = null;
-      this.decryptedCredentials = null;
-      return false;
-    }
-  }
-
-  /**
-   * Lock vault - clear sensitive data from memory and session.
+   * Lock vault - clear session data.
+   * User will need to re-enter credentials.
    */
   async lock(): Promise<void> {
-    this.derivedKey = null;
-    this.decryptedCredentials = null;
-
-    if (this.autoLockTimer) {
-      clearTimeout(this.autoLockTimer);
-      this.autoLockTimer = null;
-    }
-
-  }
-
-  /**
-   * Get decrypted credentials. Throws if locked.
-   */
-  getCredentials(): Credentials {
-    if (!this.decryptedCredentials) {
-      throw new VaultLockedError();
-    }
-
-    this.resetAutoLockTimer();
-    return this.decryptedCredentials;
-  }
-
-  /**
-   * Check if credentials are available (vault is unlocked).
-   */
-  hasCredentials(): boolean {
-    return this.decryptedCredentials !== null;
-  }
-
-  /**
-   * Change master password.
-   */
-  async changePassword(
-    oldPassword: string,
-    newPassword: string
-  ): Promise<boolean> {
-    if (!this.storedVault) {
-      throw new Error('Vault not initialized');
-    }
-
-    // Verify old password
-    const unlocked = await this.unlock(oldPassword);
-    if (!unlocked) {
-      return false;
-    }
-
-    // Re-encrypt with new password
-    const credentials = this.getCredentials();
-    await this.initialize(newPassword, credentials);
-
-    return true;
-  }
-
-  /**
-   * Update vault configuration.
-   */
-  async updateConfig(config: Partial<VaultConfig>): Promise<void> {
-    this.config = { ...this.config, ...config };
-    await chrome.storage.local.set({
-      [STORAGE_KEY_CONFIG]: this.config,
-    });
-
-    // Reset timer with new timeout
-    if (this.derivedKey) {
-      this.resetAutoLockTimer();
-    }
-  }
-
-  /**
-   * Get current configuration.
-   */
-  getConfig(): VaultConfig {
-    return { ...this.config };
+    this.encryptionKey = null;
+    this.credentials = null;
+    await chrome.storage.session.remove(STORAGE_KEY_SESSION);
+    console.log('[Vault] Locked');
   }
 
   /**
@@ -269,10 +162,25 @@ export class Vault {
   async clearAll(): Promise<void> {
     await this.lock();
     this.storedVault = null;
-    await chrome.storage.local.remove([
-      STORAGE_KEY_VAULT,
-      STORAGE_KEY_CONFIG,
-    ]);
+    await chrome.storage.local.remove(STORAGE_KEY_VAULT);
+    console.log('[Vault] Cleared');
+  }
+
+  /**
+   * Get decrypted credentials. Throws if not available.
+   */
+  getCredentials(): Credentials {
+    if (!this.credentials) {
+      throw new VaultLockedError();
+    }
+    return this.credentials;
+  }
+
+  /**
+   * Check if credentials are available.
+   */
+  hasCredentials(): boolean {
+    return this.credentials !== null;
   }
 
   // ==========================================================================
@@ -280,47 +188,21 @@ export class Vault {
   // ==========================================================================
 
   /**
-   * Derive key from password using Argon2id.
-   */
-  private async deriveKey(
-    password: string,
-    salt: Uint8Array
-  ): Promise<ArrayBuffer> {
-    const hashHex = await argon2id({
-      password,
-      salt,
-      iterations: ARGON2_ITERATIONS,
-      memorySize: ARGON2_MEMORY,
-      parallelism: ARGON2_PARALLELISM,
-      hashLength: ARGON2_HASH_LENGTH,
-      outputType: 'hex',
-    });
-
-    // Convert hex string to ArrayBuffer
-    const hashArray = new Uint8Array(hashHex.length / 2);
-    for (let i = 0; i < hashHex.length; i += 2) {
-      hashArray[i / 2] = parseInt(hashHex.substring(i, i + 2), 16);
-    }
-
-    return hashArray.buffer as ArrayBuffer;
-  }
-
-  /**
    * Encrypt plaintext using AES-256-GCM.
    */
   private async encrypt(
     plaintext: string
   ): Promise<{ ciphertext: Uint8Array; iv: Uint8Array }> {
-    if (!this.derivedKey) {
-      throw new VaultLockedError();
+    if (!this.encryptionKey) {
+      throw new Error('No encryption key');
     }
 
-    const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV for GCM
+    const iv = crypto.getRandomValues(new Uint8Array(12));
     const encoded = new TextEncoder().encode(plaintext);
 
     const ciphertext = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
-      this.derivedKey,
+      this.encryptionKey,
       encoded
     );
 
@@ -333,44 +215,18 @@ export class Vault {
   /**
    * Decrypt ciphertext using AES-256-GCM.
    */
-  private async decrypt(
-    ciphertext: Uint8Array,
-    iv: Uint8Array
-  ): Promise<string> {
-    if (!this.derivedKey) {
-      throw new VaultLockedError();
+  private async decrypt(ciphertext: Uint8Array, iv: Uint8Array): Promise<string> {
+    if (!this.encryptionKey) {
+      throw new Error('No encryption key');
     }
 
-    // Copy to ensure ArrayBuffer type compatibility
-    const ciphertextBuffer = new Uint8Array(ciphertext).buffer as ArrayBuffer;
-    const ivBuffer = new Uint8Array(iv);
-
     const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: ivBuffer },
-      this.derivedKey,
-      ciphertextBuffer
+      { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
+      this.encryptionKey,
+      ciphertext.buffer as ArrayBuffer
     );
 
     return new TextDecoder().decode(decrypted);
-  }
-
-  /**
-   * Reset auto-lock timer.
-   */
-  private resetAutoLockTimer(): void {
-    if (this.autoLockTimer) {
-      clearTimeout(this.autoLockTimer);
-    }
-
-    if (this.config.autoLockTimeoutMs > 0) {
-      this.autoLockTimer = setTimeout(() => {
-        this.lock();
-        // Notify UI that vault was locked
-        chrome.runtime.sendMessage({ type: 'VAULT_LOCKED' }).catch(() => {
-          // Panel might not be open, ignore error
-        });
-      }, this.config.autoLockTimeoutMs);
-    }
   }
 
   /**
@@ -391,7 +247,6 @@ export class Vault {
     }
     return array;
   }
-
 }
 
 // ============================================================================
@@ -400,7 +255,7 @@ export class Vault {
 
 export class VaultLockedError extends Error {
   constructor() {
-    super('Vault is locked');
+    super('Vault is locked - please enter credentials');
     this.name = 'VaultLockedError';
   }
 }

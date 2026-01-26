@@ -29,8 +29,7 @@ import type {
   RequestMessage,
   MessageResponse,
   VaultStatusResponse,
-  VaultInitResponse,
-  VaultUnlockResponse,
+  VaultSetupResponse,
   GetAccountsResponse,
   GetZonesResponse,
   CheckPreflightResponse,
@@ -56,10 +55,8 @@ import { encodeDomain } from '../shared/domains';
 const SETTINGS_KEY = 'cf_settings';
 
 const DEFAULT_SETTINGS: Settings = {
-  autoLockTimeoutMinutes: 15,
   maxConcurrency: 4,
   enableDashboardButtons: false,
-  lockOnUnload: true,
 };
 
 async function loadSettings(): Promise<Settings> {
@@ -287,52 +284,20 @@ async function handleMessage(
         return { success: true, data: response };
       }
 
-      case 'VAULT_INIT': {
-        const { email, apiKey, masterPassword } = message.payload;
-        await vault.initialize(masterPassword, { email, apiKey });
+      case 'VAULT_SETUP': {
+        const { email, apiKey } = message.payload;
+        await vault.setup({ email, apiKey });
 
         // Verify credentials
         const user = await cfClient.verifyCredentials();
         const accounts = await cfClient.getAccounts();
 
-        const response: VaultInitResponse = { user, accounts };
-        return { success: true, data: response };
-      }
-
-      case 'VAULT_UNLOCK': {
-        const { masterPassword } = message.payload;
-        const unlocked = await vault.unlock(masterPassword);
-
-        if (!unlocked) {
-          return {
-            success: false,
-            error: { code: 'INVALID_PASSWORD', message: 'Invalid master password' },
-          };
-        }
-
-        const user = await cfClient.verifyCredentials();
-        const accounts = await cfClient.getAccounts();
-
-        const response: VaultUnlockResponse = { user, accounts };
+        const response: VaultSetupResponse = { user, accounts };
         return { success: true, data: response };
       }
 
       case 'VAULT_LOCK': {
         await vault.lock();
-        return { success: true, data: { success: true } };
-      }
-
-      case 'VAULT_CHANGE_PASSWORD': {
-        const { oldPassword, newPassword } = message.payload;
-        const changed = await vault.changePassword(oldPassword, newPassword);
-
-        if (!changed) {
-          return {
-            success: false,
-            error: { code: 'INVALID_PASSWORD', message: 'Current password is incorrect' },
-          };
-        }
-
         return { success: true, data: { success: true } };
       }
 
@@ -523,10 +488,6 @@ async function handleMessage(
         await saveSettings(newSettings);
 
         // Apply settings
-        await vault.updateConfig({
-          autoLockTimeoutMs: newSettings.autoLockTimeoutMinutes * 60 * 1000,
-          lockOnUnload: newSettings.lockOnUnload,
-        });
         updatePoolConcurrency(newSettings.maxConcurrency);
 
         // Broadcast settings change to content scripts
@@ -591,10 +552,6 @@ async function initializeModules(): Promise<void> {
 
     // Load and apply settings
     const settings = await loadSettings();
-    await vault.updateConfig({
-      autoLockTimeoutMs: settings.autoLockTimeoutMinutes * 60 * 1000,
-      lockOnUnload: settings.lockOnUnload,
-    });
     updatePoolConcurrency(settings.maxConcurrency);
 
     // Check for incomplete batches

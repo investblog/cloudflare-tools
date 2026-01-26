@@ -3,7 +3,7 @@
  */
 
 export { vault, Vault, VaultLockedError } from './vault';
-export type { VaultState, Credentials, VaultConfig } from './vault';
+export type { VaultState, Credentials } from './vault';
 
 export { cfClient, CFClient, isCFClientError, isVaultLockedError } from './cf-client';
 export type { ListZonesParams, PaginatedResult, CFClientError } from './cf-client';

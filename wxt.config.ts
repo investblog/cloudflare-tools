@@ -1,6 +1,4 @@
 import { defineConfig } from 'wxt';
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
   srcDir: 'src',
@@ -22,17 +20,7 @@ export default defineConfig({
       48: 'icons/icon-48.png',
       128: 'icons/icon-128.png',
     },
-
-    // CSP for Argon2 WASM in Service Worker
-    content_security_policy: {
-      extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
-    },
   },
-
-  // Vite plugins for WASM support
-  vite: () => ({
-    plugins: [wasm(), topLevelAwait()],
-  }),
 
   // Build for both Chrome and Firefox
   browser: 'chrome',
