@@ -1406,6 +1406,28 @@ function initBackgroundEvents(): void {
       console.log('[CF Tools] Incomplete batches:', message.payload.batches);
     }
   });
+
+  // Check vault status when panel becomes visible again
+  // This handles Firefox MV2 where background can restart without notification
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && isUnlocked) {
+      try {
+        const status = await sendMessage({ type: 'VAULT_STATUS' });
+        if (!status.isUnlocked) {
+          console.log('[CF Tools] Vault locked (background restarted), showing auth');
+          resetPanelState();
+          showView('auth');
+          updateStatus(false, status.email);
+        }
+      } catch (error) {
+        // Background not responding - likely restarted
+        console.log('[CF Tools] Background not responding, showing auth');
+        resetPanelState();
+        showView('auth');
+        updateStatus(false);
+      }
+    }
+  });
 }
 
 async function init(): Promise<void> {

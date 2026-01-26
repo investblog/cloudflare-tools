@@ -17,6 +17,30 @@ let isUnlocked = false;
 let currentAccounts: CFAccount[] = [];
 
 // ============================================================================
+// Error Handling
+// ============================================================================
+
+/**
+ * Check if error indicates vault is locked.
+ * In popup, we redirect user to the panel to re-authenticate.
+ */
+function isVaultLockedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('VAULT_LOCKED') || message.includes('Vault is locked');
+}
+
+function showDisconnectedState(): void {
+  isUnlocked = false;
+  currentAccounts = [];
+  updateStatus(false);
+  setButtonsEnabled(false);
+
+  // Hide account section
+  const section = document.querySelector('[data-account-section]') as HTMLElement;
+  if (section) section.hidden = true;
+}
+
+// ============================================================================
 // UI Helpers
 // ============================================================================
 
@@ -170,8 +194,13 @@ async function purgeAllCache(): Promise<void> {
     alert(`Started purging ${zones.length} zones. Opening panel to show progress...`);
     await openSidePanel();
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Purge failed';
-    alert(`Error: ${message}`);
+    if (isVaultLockedError(error)) {
+      showDisconnectedState();
+      alert('Session expired. Please open the full panel to re-authenticate.');
+    } else {
+      const message = error instanceof Error ? error.message : 'Purge failed';
+      alert(`Error: ${message}`);
+    }
     setButtonLoading(purgeBtn, false);
   }
 }
@@ -225,8 +254,13 @@ async function exportZones(): Promise<void> {
 
     setButtonLoading(exportBtn, false);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Export failed';
-    alert(`Error: ${message}`);
+    if (isVaultLockedError(error)) {
+      showDisconnectedState();
+      alert('Session expired. Please open the full panel to re-authenticate.');
+    } else {
+      const message = error instanceof Error ? error.message : 'Export failed';
+      alert(`Error: ${message}`);
+    }
     setButtonLoading(exportBtn, false);
   }
 }
@@ -255,8 +289,7 @@ async function checkVaultStatus(): Promise<void> {
     setButtonsEnabled(true);
   } catch (error) {
     console.error('[CF Tools] Failed to check vault status:', error);
-    updateStatus(false);
-    setButtonsEnabled(false);
+    showDisconnectedState();
   }
 }
 
@@ -272,6 +305,23 @@ function initEventListeners(): void {
   // Export Zones button
   const exportBtn = document.querySelector('[data-action="export-zones"]');
   exportBtn?.addEventListener('click', exportZones);
+
+  // Check vault status when popup becomes visible again
+  // Handles Firefox MV2 where background can restart
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && isUnlocked) {
+      try {
+        const status = await sendMessage({ type: 'VAULT_STATUS' });
+        if (!status.isUnlocked) {
+          console.log('[CF Tools] Vault locked, updating popup state');
+          showDisconnectedState();
+        }
+      } catch {
+        // Background not responding
+        showDisconnectedState();
+      }
+    }
+  });
 }
 
 async function init(): Promise<void> {
