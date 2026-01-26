@@ -44,7 +44,7 @@
 </head>
 <body>
   <h1>Cloudflare Tools Privacy Policy</h1>
-  <p class="update">Last updated: January 2025</p>
+  <p class="update">Last updated: January 2026</p>
 
   <h2>Data Collection</h2>
   <p>Cloudflare Tools does not collect any user data. We have no servers, no analytics, and no tracking.</p>
@@ -52,8 +52,8 @@
   <h2>Data Storage</h2>
   <p>The following data is stored locally on your device:</p>
   <ul>
-    <li><strong>Cloudflare credentials</strong> (email and API key) — encrypted with your master password using Argon2id + AES-256-GCM</li>
-    <li><strong>Settings</strong> (auto-lock timeout, preferences) — stored in browser's local storage</li>
+    <li><strong>Cloudflare credentials</strong> (email and API key) — encrypted with AES-256-GCM using a random 256-bit key</li>
+    <li><strong>Settings</strong> (preferences) — stored in browser's local storage</li>
     <li><strong>Operation logs</strong> (batch history) — stored in IndexedDB for resume functionality</li>
   </ul>
   <p>All data remains on your device and is never transmitted to any external servers.</p>
@@ -66,15 +66,21 @@
   <p>No other external connections are made.</p>
 
   <h2>Encryption</h2>
-  <p>Your Cloudflare credentials are encrypted using:</p>
+  <p>Your Cloudflare API key is encrypted using:</p>
   <ul>
-    <li><strong>Argon2id</strong> — key derivation function with per-device salt</li>
-    <li><strong>AES-256-GCM</strong> — authenticated encryption</li>
+    <li><strong>AES-256-GCM</strong> — authenticated encryption with random 256-bit key</li>
+    <li><strong>Session storage</strong> — encryption key stored in browser session, cleared on browser close</li>
   </ul>
-  <p>The master password is never stored; only the derived encryption key is kept in memory during your session.</p>
+  <p>No passwords are required. The encryption key is automatically generated and stored in session storage, which means credentials are available during your browser session but require re-entry after closing the browser.</p>
 
-  <h2>Auto-Lock</h2>
-  <p>For security, the extension automatically locks after a period of inactivity (default: 15 minutes). When locked, all credentials are cleared from memory and API access is blocked until you re-enter your master password.</p>
+  <h2>Session Security</h2>
+  <p>For security, credentials are automatically cleared when:</p>
+  <ul>
+    <li>You close the browser</li>
+    <li>You click "Disconnect" in the extension</li>
+    <li>You clear browser data</li>
+  </ul>
+  <p>You will need to re-enter your Cloudflare email and API key to continue using the extension.</p>
 
   <h2>Data Deletion</h2>
   <p>You can delete all stored data at any time from Settings → "Clear All Data". This will:</p>

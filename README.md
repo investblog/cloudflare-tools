@@ -129,7 +129,7 @@ npm run typecheck    # TypeScript check
 - **Local encryption** — Credentials encrypted with AES-256-GCM, key in session storage
 - **Open source** — Full code available for audit
 
-[Full Privacy Policy](public/privacy.html)
+[Full Privacy Policy](docs/privacy.html)
 
 ## Related
 
