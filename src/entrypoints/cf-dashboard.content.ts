@@ -89,16 +89,39 @@ const STYLES = `
 // Icons (inline SVG)
 // ============================================================================
 
-const ICONS = {
-  add: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M12 5v14M5 12h14"/>
-  </svg>`,
-  export: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-    <polyline points="7,10 12,15 17,10"/>
-    <line x1="12" y1="15" x2="12" y2="3"/>
-  </svg>`,
-};
+/**
+ * Create SVG icon element safely (avoids innerHTML warning in Firefox)
+ */
+function createIcon(type: 'add' | 'export'): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+
+  if (type === 'add') {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M12 5v14M5 12h14');
+    svg.appendChild(path);
+  } else {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4');
+    svg.appendChild(path);
+
+    const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('points', '7,10 12,15 17,10');
+    svg.appendChild(polyline);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', '12');
+    line.setAttribute('y1', '15');
+    line.setAttribute('x2', '12');
+    line.setAttribute('y2', '3');
+    svg.appendChild(line);
+  }
+
+  return svg;
+}
 
 // ============================================================================
 // Utility Functions
@@ -200,14 +223,16 @@ function createButtons(): HTMLElement {
   // Bulk Add button
   const addBtn = document.createElement('button');
   addBtn.className = 'cf-tools-btn';
-  addBtn.innerHTML = `${ICONS.add} Bulk Add`;
+  addBtn.appendChild(createIcon('add'));
+  addBtn.appendChild(document.createTextNode(' Bulk Add'));
   addBtn.title = 'Open Cloudflare Tools to add zones in bulk';
   addBtn.addEventListener('click', openSidePanel);
 
   // Export button
   const exportBtn = document.createElement('button');
   exportBtn.className = 'cf-tools-btn cf-tools-btn--secondary';
-  exportBtn.innerHTML = `${ICONS.export} Export`;
+  exportBtn.appendChild(createIcon('export'));
+  exportBtn.appendChild(document.createTextNode(' Export'));
   exportBtn.title = 'Export all zones to CSV';
   exportBtn.addEventListener('click', exportZones);
 

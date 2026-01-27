@@ -499,7 +499,10 @@ async function handleMessage(
 
       case 'OPEN_SIDE_PANEL': {
         // Open side panel for the sender tab
-        if (_sender.tab?.id) {
+        // Firefox uses sidebarAction API, Chrome uses sidePanel
+        if (typeof browser !== 'undefined' && browser.sidebarAction?.open) {
+          await browser.sidebarAction.open();
+        } else if (chrome.sidePanel?.open && _sender.tab?.id) {
           await chrome.sidePanel.open({ tabId: _sender.tab.id });
         }
         return { success: true, data: { opened: true } };

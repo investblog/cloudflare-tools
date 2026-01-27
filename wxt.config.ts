@@ -24,6 +24,28 @@ export default defineConfig({
       48: 'icons/icon-48.png',
       128: 'icons/icon-128.png',
     },
+
+    // Firefox-specific settings
+    ...(browser === 'firefox' && {
+      browser_specific_settings: {
+        gecko: {
+          id: 'cloudflare-tools@example.com',
+          strict_min_version: '120.0',
+          data_collection_permissions: {
+            personally_identifiable: false,
+            health: false,
+            financial_and_payment: false,
+            search: false,
+            content: false,
+            technical_and_interaction: false,
+            location: false,
+            biometric: false,
+            personal_communications: false,
+            user_generated_content: false,
+          },
+        },
+      },
+    }),
   }),
 
   // Build for both Chrome and Firefox
