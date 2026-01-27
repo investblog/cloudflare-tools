@@ -32,7 +32,7 @@ export default defineConfig({
           id: 'cf-tools@301.st',
           strict_min_version: '142.0',
           data_collection_permissions: {
-            required: false,
+            required: [],
             personally_identifiable: false,
             health: false,
             financial_and_payment: false,
