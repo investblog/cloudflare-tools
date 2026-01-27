@@ -76,8 +76,8 @@ src/
 │   └── sidepanel/         # Main UI
 │       ├── index.html
 │       └── main.ts
-├── background/            # Background worker modules (to create)
-│   ├── vault.ts           # Argon2id + AES-GCM encryption
+├── background/            # Background worker modules
+│   ├── vault.ts           # Session-only AES-256-GCM encryption
 │   ├── cf-client.ts       # Cloudflare API client
 │   ├── queue.ts           # Rate-limited request pools
 │   └── ledger.ts          # IndexedDB task persistence
@@ -97,51 +97,27 @@ src/
     └── popup.css          # Popup styles
 ```
 
-## Implementation Roadmap
+## Current Status
 
-### Phase 1: Core Infrastructure (Current)
+**Version:** 0.1.0 (MVP Complete)
 
-1. **`src/background/vault.ts`** — Encrypted storage
-   - Argon2id KDF (per-device salt)
-   - AES-256-GCM encryption
-   - Master password flow
-   - Auto-lock on timeout / SW unload
+All core features implemented:
+- Session-only encrypted vault (AES-256-GCM)
+- Bulk zone creation with preflight
+- Bulk zone deletion
+- Bulk cache purge
+- Dashboard integration (optional, feature flag)
 
-2. **`src/background/cf-client.ts`** — API client
-   - Global API Key headers
-   - Response typing
-   - Error normalization
+### Planned Enhancements
 
-3. **`src/background/queue.ts`** — Rate limiting
-   - Per-operation pools: `createPool`, `deletePool`, `purgePool`, `preflightPool`
-   - Config: `maxConcurrency=4`, `maxRetries=3`, `baseDelay=500ms`
-   - Backoff: `min(cap, base * 2^attempt) + jitter`
-   - Respect `Retry-After` header
+**Phase 2:**
+- API Token support
+- DNS bulk operations
+- Zone settings bulk changes
 
-4. **`src/background/ledger.ts`** — Task persistence
-   - IndexedDB schema for `TaskEntry`
-   - Checkpoints after each step
-   - Resume after restart
-   - "Retry failed only"
-
-5. **`src/shared/messaging/protocol.ts`** — Message passing
-   - Type-safe request/response
-   - Panel ↔ Background communication
-
-### Phase 2: UI Implementation
-
-1. **Auth View** — Email + API Key + Master Password
-2. **Create View** — Textarea → Preview → Preflight → Progress
-3. **Delete View** — Account selector → Zone list (paginated) → Multi-select
-4. **Purge View** — Same as Delete + "Purge Everything"
-5. **Progress View** — Summary, ETA, Pause/Resume/Cancel
-6. **Results View** — Success/Failed lists, Export
-
-### Phase 3: Polish
-
-1. Settings (auto-lock, rate limits, feature flags)
-2. Content Script (Dashboard buttons, behind feature flag)
-3. Store submission (icons, descriptions, screenshots)
+**Phase 3:**
+- Firefox for Android support
+- Responsive mobile UI
 
 ## Cloudflare API
 
@@ -181,12 +157,12 @@ POST /zones/:id/purge_cache     # Purge cache
 }
 ```
 
-## Security Requirements
+## Security Model
 
-1. **Encryption is mandatory** — No plaintext credentials in storage
-2. **Master password required** on first launch
-3. **Auto-lock** after 15 min inactivity (configurable 1-60)
-4. **Immediate lock** on Service Worker unload
+1. **Session-only encryption** — AES-256-GCM with random key in session storage
+2. **No master password** — Credentials re-entered after browser restart
+3. **Credentials isolated** — Only background worker has access
+4. **Message validation** — Sender origin checked for all messages
 5. **No external servers** — All requests direct to CF API
 6. **Minimal permissions** — Only `storage`, `sidePanel`, `host_permissions`
 
@@ -235,13 +211,12 @@ Use `normalizeError()` from `src/shared/types/errors.ts`:
 
 Before any release, verify:
 
-- [ ] Auth: login, auto-lock, lock now, unlock
+- [ ] Auth: login, disconnect, session restore
 - [ ] Preflight: correct counts for will-create/exists/invalid/duplicate
 - [ ] Create: batch progress, retry, idempotent (no duplicates)
 - [ ] Delete: pagination, account filter, confirmation
 - [ ] Purge: batch progress, success/failed tracking
-- [ ] Resume: after browser restart
-- [ ] Export: CSV/JSON with all fields
+- [ ] Export: CSV with all fields
 
 ### Browser Matrix
 
@@ -249,7 +224,7 @@ Before any release, verify:
 |---------|---------|-----|
 | Chrome | ≥114 | Side Panel |
 | Edge | ≥114 | Side Panel |
-| Firefox | ≥120 | Sidebar |
+| Firefox | ≥142 | Sidebar |
 
 ## Common Patterns
 
@@ -257,9 +232,9 @@ Before any release, verify:
 
 ```typescript
 // From panel/popup
-const response = await chrome.runtime.sendMessage({
-  type: 'AUTH_LOGIN',
-  payload: { email, apiKey, masterPassword }
+const response = await sendMessage({
+  type: 'VAULT_SETUP',
+  payload: { email, apiKey }
 });
 ```
 
@@ -268,10 +243,8 @@ const response = await chrome.runtime.sendMessage({
 ```typescript
 // In background.ts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'AUTH_LOGIN') {
-    handleLogin(message.payload).then(sendResponse);
-    return true; // Keep channel open for async response
-  }
+  handleMessage(message, sender).then(sendResponse);
+  return true; // Keep channel open for async response
 });
 ```
 
