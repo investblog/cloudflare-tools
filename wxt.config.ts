@@ -29,9 +29,10 @@ export default defineConfig({
     ...(browser === 'firefox' && {
       browser_specific_settings: {
         gecko: {
-          id: 'cloudflare-tools@example.com',
-          strict_min_version: '120.0',
+          id: 'cf-tools@301.st',
+          strict_min_version: '142.0',
           data_collection_permissions: {
+            required: false,
             personally_identifiable: false,
             health: false,
             financial_and_payment: false,
