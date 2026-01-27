@@ -152,16 +152,21 @@ async function processBatch(batchId: string): Promise<void> {
       });
     }
 
-    // Send progress update
-    const summary = await ledger.getBatchSummary(batchId);
-    const progressEvent: BatchProgressEvent = {
-      type: 'BATCH_PROGRESS',
-      payload: { batchId, summary },
-    };
-    broadcastEvent(progressEvent);
+    // Send progress update (wrapped in try/catch to not interrupt loop)
+    try {
+      const summary = await ledger.getBatchSummary(batchId);
+      const progressEvent: BatchProgressEvent = {
+        type: 'BATCH_PROGRESS',
+        payload: { batchId, summary },
+      };
+      broadcastEvent(progressEvent);
 
-    // Update batch counters
-    await updateBatchCounters(batchId);
+      // Update batch counters
+      await updateBatchCounters(batchId);
+    } catch (progressError) {
+      console.error('[CF Tools] Progress update error:', progressError);
+      // Continue processing - don't let progress errors stop the batch
+    }
   }
 
   // Batch completed
@@ -189,9 +194,14 @@ async function updateBatchCounters(batchId: string): Promise<void> {
 }
 
 function broadcastEvent(event: BatchProgressEvent | BatchCompletedEvent): void {
-  chrome.runtime.sendMessage(event).catch(() => {
-    // Panel might not be open, ignore error
-  });
+  try {
+    // Use Promise.resolve to ensure we handle both MV2 and MV3 behavior
+    Promise.resolve(chrome.runtime.sendMessage(event)).catch(() => {
+      // Panel might not be open, ignore error
+    });
+  } catch {
+    // Synchronous error (Firefox MV2 edge case), ignore
+  }
 }
 
 function broadcastSettingsChanged(settings: Settings): void {
