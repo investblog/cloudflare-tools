@@ -8,6 +8,7 @@ export default defineConfig({
     name: 'Cloudflare Tools',
     description: 'Bulk operations for Cloudflare zones',
     version: '0.1.0',
+    homepage_url: 'https://301.st',
 
     // sidePanel is Chrome-only, Firefox uses sidebar_action (auto-added by WXT)
     permissions: browser === 'firefox'
