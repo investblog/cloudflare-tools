@@ -27,7 +27,7 @@ Browser extension for bulk operations with Cloudflare zones. Add hundreds of dom
 ## Installation
 
 ### Chrome Web Store
-Coming soon...
+→ [Cloudflare Tools](https://chromewebstore.google.com/detail/gncbekdjakchefiiahjbjlbhhfijoikp?utm_source=github-readme)
 
 ### Firefox Add-ons
 Coming soon...
