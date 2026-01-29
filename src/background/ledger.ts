@@ -87,12 +87,13 @@ export class Ledger {
   // ==========================================================================
 
   /**
-   * Create a new batch with tasks for given domains/zoneIds.
+   * Create a new batch with tasks for given domains or zones.
+   * @param items - domains (strings) for create, or zones ({id, name}) for delete/purge
    */
   async createBatch(
     operation: TaskOperation,
     accountId: string,
-    items: string[], // domains for create, zoneIds for delete/purge
+    items: string[] | Array<{ id: string; name: string }>,
     options?: { type?: 'full' | 'partial'; jumpStart?: boolean }
   ): Promise<string> {
     this.ensureOpen();
@@ -116,16 +117,33 @@ export class Ledger {
       updatedAt: now,
     };
 
-    const tasks: TaskEntry[] = items.map((item) => ({
-      id: crypto.randomUUID(),
-      batchId,
-      domain: item, // domain for create, zoneId for delete/purge
-      operation,
-      status: 'queued',
-      attempt: 0,
-      createdAt: now,
-      updatedAt: now,
-    }));
+    const tasks: TaskEntry[] = items.map((item) => {
+      // Check if item is a zone object (has id and name) or a string
+      if (typeof item === 'object' && 'id' in item && 'name' in item) {
+        return {
+          id: crypto.randomUUID(),
+          batchId,
+          domain: item.id,      // zoneId for API calls
+          zoneName: item.name,  // zone name for display
+          operation,
+          status: 'queued' as TaskStatus,
+          attempt: 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+      }
+      // String item (domain for create, or legacy zoneId)
+      return {
+        id: crypto.randomUUID(),
+        batchId,
+        domain: item,
+        operation,
+        status: 'queued' as TaskStatus,
+        attempt: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
 
     return new Promise((resolve, reject) => {
       const tx = this.db!.transaction([STORE_BATCHES, STORE_TASKS], 'readwrite');

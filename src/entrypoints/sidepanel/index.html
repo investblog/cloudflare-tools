@@ -30,6 +30,7 @@
       <!-- Navigation (shown when authenticated) -->
       <nav class="panel__nav" hidden>
         <button class="nav-tab is-active" data-tab="create">Create</button>
+        <button class="nav-tab" data-tab="check">Check</button>
         <button class="nav-tab" data-tab="delete">Delete</button>
         <button class="nav-tab" data-tab="purge">Purge</button>
         <button class="nav-tab" data-tab="settings">Settings</button>
@@ -160,6 +161,45 @@
             <button class="btn btn--primary" data-action="start-create" disabled>
               Start
             </button>
+          </div>
+        </section>
+
+        <!-- Check View -->
+        <section class="view view--check" data-view-content="check" hidden>
+          <div class="view__header">
+            <h2>Check Zones</h2>
+          </div>
+
+          <!-- Account Selector -->
+          <div class="form-group">
+            <label for="check-account-select">Account</label>
+            <select id="check-account-select" name="account" class="input" required>
+              <option value="">Select account...</option>
+            </select>
+          </div>
+
+          <!-- Zone List (read-only, no checkboxes) -->
+          <div class="zone-list zone-list--readonly" data-zone-list>
+            <div class="zone-list__loading" data-loading hidden>
+              Loading zones...
+            </div>
+            <div class="zone-list__empty" data-empty hidden>
+              No zones found in this account.
+            </div>
+            <!-- Zone items will be rendered here -->
+          </div>
+
+          <!-- Info and Actions -->
+          <div class="view__actions">
+            <span class="zone-count" data-zone-count></span>
+            <div class="view__actions-btns">
+              <button class="btn btn--ghost" data-action="refresh-zones">
+                Refresh
+              </button>
+              <button class="btn btn--ghost" data-action="export-zones">
+                Export CSV
+              </button>
+            </div>
           </div>
         </section>
 

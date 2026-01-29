@@ -387,8 +387,12 @@ async function handleMessage(
 
       // ====== Batch Operations ======
       case 'START_BATCH': {
-        const { operation, accountId, domains, zoneIds, options } = message.payload;
-        const items = operation === 'create' ? domains! : zoneIds!;
+        const { operation, accountId, domains, zones, zoneIds, options } = message.payload;
+        // For create: use domains array
+        // For delete/purge: prefer zones (with names) over legacy zoneIds
+        const items = operation === 'create'
+          ? domains!
+          : zones ?? zoneIds!;
 
         const batchId = await ledger.createBatch(operation, accountId, items, options);
 

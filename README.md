@@ -8,6 +8,7 @@ Browser extension for bulk operations with Cloudflare zones. Add hundreds of dom
 - **Bulk Zone Creation** — Paste domains, URLs or any text — parser extracts valid domains
 - **Bulk Zone Deletion** — Select zones from paginated list and delete in one click
 - **Bulk Cache Purge** — Purge "everything" for multiple zones at once
+- **Check Zones** — View all zones in account, refresh, and export to CSV
 - **Preflight Check** — See which domains will be created, skipped, or are invalid before starting
 
 ### Security
@@ -49,9 +50,10 @@ Load the extension:
 
 1. Click the extension icon to open Side Panel
 2. Enter your Cloudflare email and Global API Key
-3. Select operation: Create, Delete, or Purge
+3. Select operation: Create, Check, Delete, or Purge
 4. For Create: paste domains → Check first → Start
-5. For Delete/Purge: select account → select zones → confirm
+5. For Check: select account → view zones → Refresh or Export CSV
+6. For Delete/Purge: select account → select zones → confirm
 
 > **Note**: Credentials are encrypted and stored locally. You'll need to re-enter them after closing the browser.
 
@@ -100,9 +102,10 @@ src/
 │                  │                   │                  │
 │  • Auth form     │  • Vault          │  • Bulk Add btn  │
 │  • Bulk Create   │  • CF API client  │  • Export btn    │
-│  • Bulk Delete   │  • Request queues │                  │
-│  • Bulk Purge    │  • Task ledger    │                  │
-│  • Settings      │  • Message router │                  │
+│  • Check Zones   │  • Request queues │                  │
+│  • Bulk Delete   │  • Task ledger    │                  │
+│  • Bulk Purge    │  • Message router │                  │
+│  • Settings      │                   │                  │
 └─────────────────────────────────────────────────────────┘
          ↓                   ↓
     chrome.runtime      Cloudflare API

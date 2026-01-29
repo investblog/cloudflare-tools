@@ -7,7 +7,7 @@ export default defineConfig({
   manifest: ({ browser }) => ({
     name: 'Cloudflare Tools',
     description: 'Bulk operations for Cloudflare zones',
-    version: '0.1.1',
+    version: '0.1.2',
     homepage_url: 'https://301.st',
 
     // sidePanel is Chrome-only, Firefox uses sidebar_action (auto-added by WXT)

@@ -116,8 +116,9 @@ export interface StartBatchRequest {
   payload: {
     operation: TaskOperation;
     accountId: string;
-    domains?: string[];
-    zoneIds?: string[];
+    domains?: string[];                              // For create operation
+    zones?: Array<{ id: string; name: string }>;     // For delete/purge operations (preferred)
+    zoneIds?: string[];                              // Legacy: delete/purge without names
     options?: {
       type?: 'full' | 'partial';
       jumpStart?: boolean;

@@ -269,6 +269,30 @@
   color: var(--text-muted);
 }
 
+.zone-count {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Readonly zone list (no checkboxes, no selection) */
+.zone-list--readonly .zone-item {
+  cursor: default;
+}
+
+.zone-item--readonly {
+  cursor: default;
+}
+
+.zone-item--readonly:hover {
+  background: transparent;
+}
+
+/* Actions with multiple buttons */
+.view__actions-btns {
+  display: flex;
+  gap: var(--space-2);
+}
+
 /* Progress panel */
 .progress-panel {
   text-align: center;

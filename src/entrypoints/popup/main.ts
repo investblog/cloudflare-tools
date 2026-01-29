@@ -180,13 +180,13 @@ async function purgeAllCache(): Promise<void> {
       return;
     }
 
-    // Start batch purge
+    // Start batch purge with zone names for better error reporting
     const { batchId } = await sendMessage({
       type: 'START_BATCH',
       payload: {
         operation: 'purge',
         accountId,
-        zoneIds: zones.map((z) => z.id),
+        zones: zones.map((z) => ({ id: z.id, name: z.name })),
       },
     });
 

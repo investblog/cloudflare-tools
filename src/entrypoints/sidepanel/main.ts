@@ -218,6 +218,10 @@ let preflightResults: PreflightResult[] = [];
 // Account selection (shared across tabs)
 let selectedAccountId: string | null = null;
 
+// Check view state
+let checkZones: CFZone[] = [];
+let checkCurrentPage = 1;
+
 // Delete/Purge view state
 let deleteZones: CFZone[] = [];
 let purgeZones: CFZone[] = [];
@@ -248,11 +252,13 @@ function resetPanelState(): void {
   isUnlocked = false;
   currentAccounts = [];
   selectedAccountId = null;
+  checkZones = [];
   deleteZones = [];
   purgeZones = [];
   selectedDeleteZones.clear();
   selectedPurgeZones.clear();
   preflightResults = [];
+  checkCurrentPage = 1;
   deleteCurrentPage = 1;
   purgeCurrentPage = 1;
 
@@ -317,7 +323,7 @@ function resetPanelState(): void {
 // View Management
 // ============================================================================
 
-type ViewName = 'auth' | 'create' | 'delete' | 'purge' | 'progress' | 'results' | 'settings';
+type ViewName = 'auth' | 'create' | 'check' | 'delete' | 'purge' | 'progress' | 'results' | 'settings';
 
 function showView(viewName: ViewName): void {
   // Hide all views
@@ -594,6 +600,117 @@ function initCreateView(): void {
 // Delete View
 // ============================================================================
 
+// ============================================================================
+// Check View
+// ============================================================================
+
+async function loadZonesForCheck(accountId: string, page = 1): Promise<void> {
+  const zoneList = document.querySelector('[data-view-content="check"] [data-zone-list]') as HTMLElement;
+  const loadingEl = zoneList?.querySelector('[data-loading]') as HTMLElement;
+  const emptyEl = zoneList?.querySelector('[data-empty]') as HTMLElement;
+  const countEl = document.querySelector('[data-view-content="check"] [data-zone-count]');
+
+  if (!zoneList) return;
+
+  if (loadingEl) loadingEl.hidden = false;
+  if (emptyEl) emptyEl.hidden = true;
+
+  try {
+    const { zones, pagination } = await sendMessage({
+      type: 'GET_ZONES',
+      payload: { accountId, page, perPage: ZONES_PER_PAGE },
+    });
+
+    checkZones = zones;
+    checkCurrentPage = page;
+
+    renderReadonlyZoneList(zoneList, zones);
+
+    if (loadingEl) loadingEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = zones.length > 0;
+    if (countEl) {
+      countEl.textContent = `${zones.length} zone${zones.length === 1 ? '' : 's'}`;
+    }
+  } catch (error) {
+    if (loadingEl) loadingEl.hidden = true;
+    if (!handleVaultLockedError(error)) {
+      console.error('[CF Tools] Failed to load zones:', error);
+    }
+  }
+}
+
+function renderReadonlyZoneList(container: HTMLElement, zones: CFZone[]): void {
+  // Remove existing zone items
+  container.querySelectorAll('.zone-item').forEach((el) => el.remove());
+
+  zones.forEach((zone) => {
+    const item = document.createElement('div');
+    item.className = 'zone-item zone-item--readonly';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'zone-name';
+    nameSpan.textContent = zone.name;
+
+    const statusSpan = document.createElement('span');
+    statusSpan.className = 'zone-status';
+    statusSpan.dataset.status = zone.status;
+    statusSpan.textContent = zone.status;
+
+    item.appendChild(nameSpan);
+    item.appendChild(statusSpan);
+    container.appendChild(item);
+  });
+}
+
+function exportZonesCSV(): void {
+  if (checkZones.length === 0) return;
+
+  const csv = ['domain,status,plan,name_servers'];
+  checkZones.forEach((zone) => {
+    const nameServers = zone.name_servers?.join(';') || '';
+    csv.push(`"${zone.name}","${zone.status}","${zone.plan?.name || 'free'}","${nameServers}"`);
+  });
+
+  const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zones-${selectedAccountId || 'export'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function initCheckView(): void {
+  const accountSelect = document.getElementById('check-account-select') as HTMLSelectElement;
+  const refreshBtn = document.querySelector('[data-action="refresh-zones"]') as HTMLButtonElement;
+  const exportBtn = document.querySelector('[data-action="export-zones"]') as HTMLButtonElement;
+
+  if (!accountSelect) return;
+
+  accountSelect.addEventListener('change', () => {
+    const accountId = accountSelect.value;
+    syncAccountSelectors(accountId || null);
+    if (accountId) {
+      loadZonesForCheck(accountId);
+    }
+  });
+
+  refreshBtn?.addEventListener('click', () => {
+    const accountId = accountSelect.value;
+    if (accountId) {
+      loadZonesForCheck(accountId);
+    }
+  });
+
+  exportBtn?.addEventListener('click', () => {
+    exportZonesCSV();
+  });
+}
+
+// ============================================================================
+// Delete View
+// ============================================================================
+
 async function loadZonesForDelete(accountId: string, page = 1): Promise<void> {
   const zoneList = document.querySelector('[data-view-content="delete"] [data-zone-list]') as HTMLElement;
   const loadingEl = zoneList?.querySelector('[data-loading]') as HTMLElement;
@@ -717,12 +834,17 @@ function initDeleteView(): void {
       setButtonLoading(deleteBtn, true);
 
       try {
+        // Get selected zones with names for better error reporting
+        const selectedZonesWithNames = deleteZones
+          .filter((z) => selectedDeleteZones.has(z.id))
+          .map((z) => ({ id: z.id, name: z.name }));
+
         const { batchId } = await sendMessage({
           type: 'START_BATCH',
           payload: {
             operation: 'delete',
             accountId,
-            zoneIds: Array.from(selectedDeleteZones),
+            zones: selectedZonesWithNames,
           },
         });
 
@@ -820,12 +942,17 @@ function initPurgeView(): void {
       setButtonLoading(purgeBtn, true);
 
       try {
+        // Get selected zones with names for better error reporting
+        const selectedZonesWithNames = purgeZones
+          .filter((z) => selectedPurgeZones.has(z.id))
+          .map((z) => ({ id: z.id, name: z.name }));
+
         const { batchId } = await sendMessage({
           type: 'START_BATCH',
           payload: {
             operation: 'purge',
             accountId,
-            zoneIds: Array.from(selectedPurgeZones),
+            zones: selectedZonesWithNames,
           },
         });
 
@@ -1032,7 +1159,8 @@ async function loadFailedTasks(): Promise<void> {
       li.className = 'results-item results-item--failed';
       const domainSpan = document.createElement('span');
       domainSpan.className = 'results-item__domain';
-      domainSpan.textContent = task.domain;
+      // Use zoneName for delete/purge, domain for create
+      domainSpan.textContent = task.zoneName || task.domain;
 
       const errorSpan = document.createElement('span');
       errorSpan.className = 'results-item__error';
@@ -1082,11 +1210,12 @@ function initResultsView(): void {
         payload: { batchId: currentBatchId },
       });
 
-      // Create CSV
+      // Create CSV - use zoneName for delete/purge, domain for create
       const csv = ['domain,error'];
       tasks.forEach((task) => {
+        const displayName = task.zoneName || task.domain;
         const escapedError = (task.errorMessage || '').replace(/"/g, '""');
-        csv.push(`"${task.domain}","${escapedError}"`);
+        csv.push(`"${displayName}","${escapedError}"`);
       });
 
       // Download
@@ -1300,7 +1429,9 @@ function initNavigation(): void {
 
         // Load data when switching tabs (if account selected)
         if (selectedAccountId) {
-          if (tabName === 'delete' && deleteZones.length === 0) {
+          if (tabName === 'check' && checkZones.length === 0) {
+            loadZonesForCheck(selectedAccountId);
+          } else if (tabName === 'delete' && deleteZones.length === 0) {
             loadZonesForDelete(selectedAccountId);
           } else if (tabName === 'purge' && purgeZones.length === 0) {
             loadZonesForPurge(selectedAccountId);
@@ -1469,6 +1600,7 @@ async function init(): Promise<void> {
   initAuthForm();
   initDomainInput();
   initCreateView();
+  initCheckView();
   initDeleteView();
   initPurgeView();
   initProgressView();

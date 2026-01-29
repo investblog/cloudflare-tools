@@ -22,7 +22,8 @@ export type PreflightStatus =
 export interface TaskEntry {
   id: string;
   batchId: string;
-  domain: string;
+  domain: string;           // Domain name for create, zoneId for delete/purge
+  zoneName?: string;        // Zone name for delete/purge (for display)
   operation: TaskOperation;
   status: TaskStatus;
   preflightStatus?: PreflightStatus;
