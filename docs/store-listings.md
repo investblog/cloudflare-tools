@@ -14,9 +14,10 @@ manifest limit); everything below is pasted manually per store.
 | Firefox Add-ons (AMO) | Release notes (per version) | — | **Release notes below** |
 | Edge Add-ons | Short / Full description | 132 / 10 000 | same texts as CWS |
 
-For the 15 card-only locales (de, es, fr, hi, id, it, ja, ko, pl, pt_BR, th, tr,
-vi, zh_CN, zh_TW) use the localized short description (table at the bottom) and
-the ENGLISH detailed description — the in-product UI for them is English anyway.
+Full detailed descriptions for ALL 17 manifest locales live in:
+- `store-descriptions-chrome.md` — plain text (Chrome Web Store / Edge Add-ons)
+- `store-descriptions-firefox.md` — Markdown (AMO)
+One translation source, two renders; the EN/RU texts below predate them and match.
 
 ---
 
