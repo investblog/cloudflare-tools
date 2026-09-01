@@ -307,6 +307,14 @@ Store credentials are this repo's **GitHub Actions secrets** (`CHROME_*`,
 investblog extensions; only the per-extension IDs (`CHROME_EXTENSION_ID`,
 `FIREFOX_EXTENSION_ID`, `EDGE_PRODUCT_ID`) differ.
 
+**When a release changes the permission set** (as v0.2.0 did with the optional
+news permissions): the Chrome auto-submit will UPLOAD the package but FAIL the
+publish step with "Publish condition not met: ... privacy information" — the
+Privacy practices tab in the CWS Dev Console must be updated (per-permission
+justifications + data-usage declarations) BEFORE publishing. The uploaded draft
+survives; finish the submit by clicking "Submit for review" in the console —
+do NOT re-run the workflow (re-uploading the same version is rejected).
+
 **Before changing the release/CI flow:** confirm the reusable-workflow ref still
 resolves and the secrets exist (`gh secret list`). Store publishing here depends
 on the external `investblog/geo-tier-builder` workflow — it is a cross-repo
