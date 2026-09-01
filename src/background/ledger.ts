@@ -8,13 +8,7 @@
  * - Export results
  */
 
-import type {
-  TaskOperation,
-  TaskStatus,
-  TaskEntry,
-  BatchInfo,
-  BatchSummary,
-} from '../shared/types/tasks';
+import type { BatchInfo, BatchSummary, TaskEntry, TaskOperation, TaskStatus } from '../shared/types/tasks';
 
 // ============================================================================
 // Constants
@@ -94,7 +88,8 @@ export class Ledger {
     operation: TaskOperation,
     accountId: string,
     items: string[] | Array<{ id: string; name: string }>,
-    options?: { type?: 'full' | 'partial'; jumpStart?: boolean }
+    options?: { type?: 'full' | 'partial'; jumpStart?: boolean },
+    profileId?: string,
   ): Promise<string> {
     this.ensureOpen();
 
@@ -105,6 +100,7 @@ export class Ledger {
       id: batchId,
       operation,
       accountId,
+      profileId,
       options,
       totalCount: items.length,
       processedCount: 0,
@@ -123,8 +119,8 @@ export class Ledger {
         return {
           id: crypto.randomUUID(),
           batchId,
-          domain: item.id,      // zoneId for API calls
-          zoneName: item.name,  // zone name for display
+          domain: item.id, // zoneId for API calls
+          zoneName: item.name, // zone name for display
           operation,
           status: 'queued' as TaskStatus,
           attempt: 0,
@@ -219,7 +215,7 @@ export class Ledger {
       request.onsuccess = () => {
         const batches = request.result as BatchInfo[];
         const incomplete = batches.filter(
-          (b) => b.status === 'running' || b.status === 'paused' || b.status === 'pending'
+          (b) => b.status === 'running' || b.status === 'paused' || b.status === 'pending',
         );
         resolve(incomplete);
       };
@@ -360,9 +356,7 @@ export class Ledger {
 
     const tasks = await this.getTasksByBatch(batchId);
 
-    const processed = tasks.filter((t) =>
-      ['success', 'failed', 'skipped', 'blocked'].includes(t.status)
-    ).length;
+    const processed = tasks.filter((t) => ['success', 'failed', 'skipped', 'blocked'].includes(t.status)).length;
 
     const success = tasks.filter((t) => t.status === 'success').length;
     const failed = tasks.filter((t) => t.status === 'failed').length;
@@ -376,8 +370,7 @@ export class Ledger {
 
     let etaMs: number | null = null;
     if (completedTasks.length > 0) {
-      const avgLatency =
-        completedTasks.reduce((sum, t) => sum + (t.latencyMs || 0), 0) / completedTasks.length;
+      const avgLatency = completedTasks.reduce((sum, t) => sum + (t.latencyMs || 0), 0) / completedTasks.length;
       const remaining = batch.totalCount - processed;
       etaMs = Math.round(avgLatency * remaining);
     }
@@ -413,9 +406,7 @@ export class Ledger {
       request.onerror = () => reject(new Error(`Failed to get batches: ${request.error?.message}`));
       request.onsuccess = async () => {
         const batches = request.result as BatchInfo[];
-        const toDelete = batches.filter(
-          (b) => b.status === 'completed' && b.createdAt < cutoff
-        );
+        const toDelete = batches.filter((b) => b.status === 'completed' && b.createdAt < cutoff);
 
         for (const batch of toDelete) {
           await this.deleteBatch(batch.id);

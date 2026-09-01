@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Opérations en masse sur les zones Cloudflare : créer, vérifier, supprimer, purger le cache. Jetons API et Global API Key."
+  }
+}

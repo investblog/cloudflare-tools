@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Cloudflare bölgelerinde toplu işlem: alan adlarını topluca oluştur, denetle, sil, önbelleği temizle. API token ve Global API Key."
+  }
+}

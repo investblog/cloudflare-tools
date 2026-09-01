@@ -230,10 +230,7 @@ export class RequestPool {
     }
 
     // Exponential backoff: min(maxDelay, baseDelay * 2^attempt)
-    const exponentialDelay = Math.min(
-      this.config.maxDelayMs,
-      this.config.baseDelayMs * Math.pow(2, attempt)
-    );
+    const exponentialDelay = Math.min(this.config.maxDelayMs, this.config.baseDelayMs * 2 ** attempt);
 
     // Add jitter: random fraction of baseDelay
     const jitter = Math.random() * this.config.baseDelayMs * this.config.jitterFactor;

@@ -1,0 +1,590 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Bulk operations for Cloudflare zones: create, check, delete and purge many domains at once. API tokens and Global API Key."
+  },
+  "tabCreate": {
+    "message": "Create"
+  },
+  "tabCheck": {
+    "message": "Check"
+  },
+  "tabDelete": {
+    "message": "Delete"
+  },
+  "tabPurge": {
+    "message": "Purge"
+  },
+  "tabSettings": {
+    "message": "Settings"
+  },
+  "statusConnected": {
+    "message": "Connected"
+  },
+  "statusDisconnected": {
+    "message": "Disconnected"
+  },
+  "titleLogin": {
+    "message": "Login"
+  },
+  "titleDisconnect": {
+    "message": "Disconnect"
+  },
+  "titleToggleTheme": {
+    "message": "Toggle theme"
+  },
+  "titleSwitchProfile": {
+    "message": "Profiles"
+  },
+  "loading": {
+    "message": "Loading..."
+  },
+  "authTitleAdd": {
+    "message": "Connect a Cloudflare profile."
+  },
+  "authTitleReauth": {
+    "message": "Re-enter the secret for \"$1\""
+  },
+  "authIntroHint": {
+    "message": "For redirects, TDS & domain management →"
+  },
+  "authSecretLabel": {
+    "message": "API Token or Global API Key"
+  },
+  "authSecretLink": {
+    "message": "Create an API token or get your Global API Key →"
+  },
+  "authKindLabel": {
+    "message": "Credential type"
+  },
+  "authKindChoose": {
+    "message": "Choose type…"
+  },
+  "authKindHint": {
+    "message": "Older tokens have no prefix — pick the type manually."
+  },
+  "authEmailLabel": {
+    "message": "Cloudflare Email"
+  },
+  "authAccountIdLabel": {
+    "message": "Account ID"
+  },
+  "authAccountIdHint": {
+    "message": "Cloudflare dashboard → account home → Account ID."
+  },
+  "authLabelLabel": {
+    "message": "Label (optional)"
+  },
+  "authLabelPlaceholder": {
+    "message": "e.g. Main account"
+  },
+  "authConnect": {
+    "message": "Connect"
+  },
+  "authUseOtherProfile": {
+    "message": "Use a different profile"
+  },
+  "authAddNew": {
+    "message": "Add a new profile instead"
+  },
+  "authDetected": {
+    "message": "Detected: $1"
+  },
+  "authNoPrefix": {
+    "message": "No prefix detected — choose the credential type below."
+  },
+  "authFailed": {
+    "message": "Authentication failed"
+  },
+  "kindGlobalKey": {
+    "message": "Global Key"
+  },
+  "kindUserToken": {
+    "message": "User Token"
+  },
+  "kindAccountToken": {
+    "message": "Account Token"
+  },
+  "kindOptionUserToken": {
+    "message": "User API Token"
+  },
+  "kindOptionAccountToken": {
+    "message": "Account API Token"
+  },
+  "kindOptionGlobalKey": {
+    "message": "Global API Key"
+  },
+  "profilesTitle": {
+    "message": "Profiles"
+  },
+  "profileActive": {
+    "message": "active"
+  },
+  "profileReenterBadge": {
+    "message": "re-enter"
+  },
+  "profileSwitch": {
+    "message": "Switch"
+  },
+  "profileReenter": {
+    "message": "Re-enter"
+  },
+  "profileRemoveTitle": {
+    "message": "Remove profile"
+  },
+  "profileRemoveConfirmTitle": {
+    "message": "Remove Profile"
+  },
+  "profileRemoveConfirmMsg": {
+    "message": "Remove profile \"$1\"? Its stored secret is deleted."
+  },
+  "profileRemoveConfirmBtn": {
+    "message": "Remove"
+  },
+  "profileSwitchFailed": {
+    "message": "Failed to switch profile"
+  },
+  "profileRemoveFailed": {
+    "message": "Failed to remove profile"
+  },
+  "profileAddBtn": {
+    "message": "Add profile"
+  },
+  "profileNone": {
+    "message": "No profiles yet."
+  },
+  "profilesHint": {
+    "message": "Global API Key or API tokens. Secrets are encrypted per browser session."
+  },
+  "accountLabel": {
+    "message": "Account"
+  },
+  "accountSelectPlaceholder": {
+    "message": "Select account..."
+  },
+  "createTitle": {
+    "message": "Bulk Create Zones"
+  },
+  "createDomainsLabel": {
+    "message": "Domains"
+  },
+  "createDomainsDetected": {
+    "message": "domains detected"
+  },
+  "createZoneSettings": {
+    "message": "Zone Settings"
+  },
+  "createJumpStart": {
+    "message": "Import existing DNS records from domain"
+  },
+  "createZoneType": {
+    "message": "Zone type"
+  },
+  "createTypeFull": {
+    "message": "Full"
+  },
+  "createTypePartial": {
+    "message": "Partial (CNAME)"
+  },
+  "createTypeHint": {
+    "message": "Full — change nameservers to Cloudflare. Partial — keep current NS, proxy via CNAME (Business+ plans only)."
+  },
+  "createWillCreate": {
+    "message": "will create"
+  },
+  "createExists": {
+    "message": "exist (skip)"
+  },
+  "createInvalid": {
+    "message": "invalid"
+  },
+  "createDuplicate": {
+    "message": "duplicate"
+  },
+  "createCheckFirst": {
+    "message": "Check first"
+  },
+  "createStart": {
+    "message": "Start"
+  },
+  "checkTitle": {
+    "message": "Check Zones"
+  },
+  "zonesLoading": {
+    "message": "Loading zones..."
+  },
+  "zonesEmpty": {
+    "message": "No zones found in this account."
+  },
+  "checkRefresh": {
+    "message": "Refresh"
+  },
+  "checkExport": {
+    "message": "CSV"
+  },
+  "checkExportAll": {
+    "message": "All CSV"
+  },
+  "checkExportAllTitle": {
+    "message": "Every zone from every account, all pages"
+  },
+  "exportFailedMsg": {
+    "message": "Export failed"
+  },
+  "deleteTitle": {
+    "message": "Bulk Delete Zones"
+  },
+  "selectedCount": {
+    "message": "selected"
+  },
+  "deleteSelected": {
+    "message": "Delete Selected"
+  },
+  "deleteConfirmTitle": {
+    "message": "Delete Zones"
+  },
+  "deleteConfirmMsg": {
+    "message": "Are you sure you want to delete $1 zone(s)? This action cannot be undone."
+  },
+  "deleteConfirmBtn": {
+    "message": "Delete"
+  },
+  "deleteStartFailed": {
+    "message": "Failed to start delete"
+  },
+  "deleteProgress": {
+    "message": "Deleting zones..."
+  },
+  "purgeTitle": {
+    "message": "Bulk Purge Cache"
+  },
+  "purgeSelectAll": {
+    "message": "Select all"
+  },
+  "purgeSelectAllTitle": {
+    "message": "Load and select every zone in this account"
+  },
+  "purgeEverything": {
+    "message": "Purge Everything"
+  },
+  "purgeConfirmTitle": {
+    "message": "Purge Cache"
+  },
+  "purgeConfirmMsg": {
+    "message": "Are you sure you want to purge cache for $1 zone(s)?"
+  },
+  "purgeConfirmBtn": {
+    "message": "Purge"
+  },
+  "purgeStartFailed": {
+    "message": "Failed to start purge"
+  },
+  "purgeProgress": {
+    "message": "Purging cache..."
+  },
+  "zonesLoadFailed": {
+    "message": "Failed to load zones"
+  },
+  "progressProcessing": {
+    "message": "Processing..."
+  },
+  "progressSuccess": {
+    "message": "success"
+  },
+  "progressFailed": {
+    "message": "failed"
+  },
+  "progressSkipped": {
+    "message": "skipped"
+  },
+  "progressEta": {
+    "message": "ETA:"
+  },
+  "progressCalculating": {
+    "message": "calculating..."
+  },
+  "progressPause": {
+    "message": "Pause"
+  },
+  "progressResume": {
+    "message": "Resume"
+  },
+  "progressCancel": {
+    "message": "Cancel"
+  },
+  "resultsTitle": {
+    "message": "Results"
+  },
+  "resultsSucceeded": {
+    "message": "succeeded,"
+  },
+  "resultsFailedWord": {
+    "message": "failed,"
+  },
+  "resultsSkippedWord": {
+    "message": "skipped"
+  },
+  "resultsCtaText": {
+    "message": "Set up redirects, TDS rules & more for your new domains"
+  },
+  "resultsCtaBtn": {
+    "message": "Open 301.st Dashboard →"
+  },
+  "resultsFailedHeading": {
+    "message": "Failed"
+  },
+  "resultsRetryFailed": {
+    "message": "Retry Failed"
+  },
+  "resultsExportFailed": {
+    "message": "Export Failed"
+  },
+  "resultsDone": {
+    "message": "Done"
+  },
+  "settingsTitle": {
+    "message": "Settings"
+  },
+  "settingsRateLimits": {
+    "message": "Rate Limits"
+  },
+  "settingsConcurrency": {
+    "message": "Max concurrent requests"
+  },
+  "settingsAppearance": {
+    "message": "Appearance"
+  },
+  "settingsTheme": {
+    "message": "Theme"
+  },
+  "themeAuto": {
+    "message": "Auto (system)"
+  },
+  "themeDark": {
+    "message": "Dark"
+  },
+  "themeLight": {
+    "message": "Light"
+  },
+  "settingsThemeHint": {
+    "message": "Auto follows your browser/OS preference."
+  },
+  "settingsNews": {
+    "message": "Publisher News"
+  },
+  "settingsNewsToggle": {
+    "message": "Notify about 301.st tool updates"
+  },
+  "settingsNewsHint": {
+    "message": "Opt-in only: checks the 301.sh feed a few times a day, no identifiers sent. Off by default."
+  },
+  "settingsDashboard": {
+    "message": "Dashboard Integration"
+  },
+  "settingsDashboardToggle": {
+    "message": "Enable Dashboard buttons"
+  },
+  "settingsDashboardHint": {
+    "message": "Adds \"Bulk Add\" and \"Export\" buttons to Cloudflare Dashboard."
+  },
+  "settingsDanger": {
+    "message": "Danger Zone"
+  },
+  "settingsClearData": {
+    "message": "Clear All Data"
+  },
+  "settingsClearDataHint": {
+    "message": "Removes all stored credentials and settings."
+  },
+  "settingsClearConfirmTitle": {
+    "message": "Clear All Data"
+  },
+  "settingsClearConfirmMsg": {
+    "message": "This will remove all stored credentials and settings. Are you sure?"
+  },
+  "settingsClearConfirmBtn": {
+    "message": "Clear Data"
+  },
+  "settingsClearFailed": {
+    "message": "Clear failed"
+  },
+  "settingsAbout": {
+    "message": "About"
+  },
+  "settingsAboutText": {
+    "message": "Free bulk operations for new CF accounts."
+  },
+  "settingsWhatsNew": {
+    "message": "What's new"
+  },
+  "settingsPromoTitle": {
+    "message": "Need more? Try"
+  },
+  "settingsPrivacy": {
+    "message": "Privacy Policy"
+  },
+  "footerPoweredBy": {
+    "message": "Powered by"
+  },
+  "footerRate": {
+    "message": "Rate ★"
+  },
+  "dialogConfirm": {
+    "message": "Confirm"
+  },
+  "dialogNotice": {
+    "message": "Notice"
+  },
+  "dialogError": {
+    "message": "Error"
+  },
+  "dialogCancel": {
+    "message": "Cancel"
+  },
+  "dialogOk": {
+    "message": "OK"
+  },
+  "dialogClose": {
+    "message": "Close"
+  },
+  "welTitle": {
+    "message": "Welcome — Cloudflare Tools"
+  },
+  "welTagline": {
+    "message": "Bulk operations for Cloudflare zones — right in your browser."
+  },
+  "welGetStarted": {
+    "message": "Get started"
+  },
+  "welGetStartedText": {
+    "message": "Open the panel, connect a profile (API token or Global API Key), pick an account — and paste your domain list."
+  },
+  "welOpenPanel": {
+    "message": "Open the panel"
+  },
+  "welPinHint": {
+    "message": "Tip: pin the extension to the toolbar — one click opens the side panel."
+  },
+  "welWhatsInside": {
+    "message": "What's inside"
+  },
+  "welWhatsNew": {
+    "message": "What's new in v$1"
+  },
+  "welPrivacyTitle": {
+    "message": "Private by default"
+  },
+  "welPrivacyText": {
+    "message": "No analytics, no tracking. Requests go straight to api.cloudflare.com; credentials are encrypted per browser session and never leave your device."
+  },
+  "welLink301": {
+    "message": "301.st — redirects & TDS"
+  },
+  "welLinkRate": {
+    "message": "Rate the extension ★"
+  },
+  "newsTitleOn": {
+    "message": "Turn update notifications off"
+  },
+  "newsTitleOff": {
+    "message": "Turn update notifications on"
+  },
+  "newsStateOn": {
+    "message": "Update notifications are on"
+  },
+  "newsStateOff": {
+    "message": "Get notified about 301.st tool updates (opt-in, no identifiers sent)"
+  },
+  "welFeatCreate": {
+    "message": "Paste any text with domains — bulk-add zones with preflight checks"
+  },
+  "welFeatCheck": {
+    "message": "Zone list per account, nameservers and status, CSV export (all accounts)"
+  },
+  "welFeatDelete": {
+    "message": "Multi-select zone deletion with confirmation"
+  },
+  "welFeatPurge": {
+    "message": "Purge Everything for selected zones, or a whole account at once"
+  },
+  "welFeatProfiles": {
+    "message": "Global API Key or API tokens (user / account-owned), quick switching"
+  },
+  "createDomainsPlaceholder": {
+    "message": "Paste domains, URLs, or any text containing domains...\n\nexample.com\nhttps://site.ru/page\ndomain.net"
+  },
+  "authAccountIdPlaceholder": {
+    "message": "32-character account id"
+  },
+  "createProgress": {
+    "message": "Creating zones..."
+  },
+  "zonesCountLabel": {
+    "message": "$1 zone(s)"
+  },
+  "createStartFailed": {
+    "message": "Failed to start batch"
+  },
+  "cancelConfirmTitle": {
+    "message": "Cancel Operation"
+  },
+  "cancelConfirmMsg": {
+    "message": "Are you sure you want to cancel? Progress will be lost."
+  },
+  "retryProgress": {
+    "message": "Retrying failed..."
+  },
+  "retryFailedMsg": {
+    "message": "Retry failed"
+  },
+  "retryErrorTitle": {
+    "message": "Retry Error"
+  },
+  "accountRequiredTitle": {
+    "message": "Account Required"
+  },
+  "accountRequiredMsg": {
+    "message": "Please select an account"
+  },
+  "noDomainsTitle": {
+    "message": "No Domains"
+  },
+  "noDomainsMsg": {
+    "message": "No domains found in the input"
+  },
+  "noDomainsPreflightMsg": {
+    "message": "No domains to create. Run preflight check first."
+  },
+  "preflightErrorTitle": {
+    "message": "Preflight Error"
+  },
+  "progressCompleting": {
+    "message": "completing..."
+  },
+  "promoRedirects": {
+    "message": "Edge Redirects — bulk 301/302 with <50ms response"
+  },
+  "promoTds": {
+    "message": "TDS — geo, device & bot filtering rules"
+  },
+  "promoMulti": {
+    "message": "Multi-account Cloudflare orchestration"
+  },
+  "promoMonitoring": {
+    "message": "Domain health monitoring & alerts"
+  },
+  "accountAddProfile": {
+    "message": "Add profile…"
+  },
+  "settingsManageProfiles": {
+    "message": "Manage profiles"
+  },
+  "checkExportTitle": {
+    "message": "Export CSV — current account"
+  },
+  "trayToggleTitle": {
+    "message": "Show / hide actions"
+  }
+}

@@ -10,14 +10,19 @@
  * - Permission: Token lacks required scopes
  */
 
-export type ErrorCategory =
-  | 'auth'
-  | 'rate_limit'
-  | 'validation'
-  | 'dependency'
-  | 'network'
-  | 'permission'
-  | 'unknown';
+export type ErrorCategory = 'auth' | 'rate_limit' | 'validation' | 'dependency' | 'network' | 'permission' | 'unknown';
+
+/** The high-level operation a request belongs to — drives permission recommendations. */
+export type CFOperation = 'verify' | 'accounts' | 'list' | 'create' | 'delete' | 'purge';
+
+export const PERMISSION_RECOMMENDATIONS: Record<CFOperation, string> = {
+  verify: 'This credential cannot be verified — check the token status and scopes',
+  accounts: 'Token lacks "Account Settings: Read" — add it, or enter the Account ID manually',
+  list: 'Token lacks "Zone: Read" for this account',
+  create: 'Token lacks "Zone: Edit" on account resources (required to create zones)',
+  delete: 'Token lacks "Zone: Edit" for this zone',
+  purge: 'Token lacks "Cache Purge: Purge" (or "Zone: Edit") for this zone',
+};
 
 export interface NormalizedError {
   category: ErrorCategory;
@@ -42,6 +47,9 @@ export const CF_ERROR_CODES = {
   MISSING_AUTH_KEY: 6103,
   UNKNOWN_AUTH_KEY: 9103,
   INVALID_AUTH_HEADER: 9106,
+
+  // Token lacks the required permission for the attempted operation
+  TOKEN_MISSING_PERMISSION: 9109,
 
   // Validation errors
   ZONE_ALREADY_EXISTS: 1061,
@@ -70,16 +78,34 @@ const AUTH_ERROR_CODES: Set<number> = new Set([
 ]);
 
 /**
- * Map CF error code to normalized error
+ * Codes that unambiguously mean bad key material / malformed auth headers —
+ * these stay `auth` even when transported over HTTP 403.
+ */
+const KEY_MATERIAL_ERROR_CODES: Set<number> = new Set([
+  CF_ERROR_CODES.INVALID_TOKEN,
+  CF_ERROR_CODES.INVALID_REQUEST_HEADERS,
+  CF_ERROR_CODES.INVALID_AUTH_KEY_FORMAT,
+  CF_ERROR_CODES.INVALID_AUTH_EMAIL_FORMAT,
+  CF_ERROR_CODES.MISSING_AUTH_EMAIL,
+  CF_ERROR_CODES.MISSING_AUTH_KEY,
+  CF_ERROR_CODES.UNKNOWN_AUTH_KEY,
+  CF_ERROR_CODES.INVALID_AUTH_HEADER,
+]);
+
+/**
+ * Map CF error code to normalized error.
+ *
+ * `httpStatus` and `operation` are optional so existing call sites keep working;
+ * pass them to get the `permission` category and per-operation recommendations.
  */
 export function normalizeError(
   code: number | string,
   message: string,
-  retryAfterHeader?: string
+  retryAfterHeader?: string,
+  httpStatus?: number,
+  operation?: CFOperation,
 ): NormalizedError {
-  const retryAfterMs = retryAfterHeader
-    ? parseInt(retryAfterHeader, 10) * 1000
-    : undefined;
+  const retryAfterMs = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : undefined;
 
   // Timeout error
   if (code === 'TIMEOUT') {
@@ -95,13 +121,32 @@ export function normalizeError(
   // Ensure code is a number for remaining checks
   const numCode = typeof code === 'number' ? code : parseInt(code, 10) || 0;
 
+  // Permission errors: code 9109 is CF's "token not authorized for this
+  // resource"; an HTTP 403 whose code is not clearly bad key material (9103
+  // unknown key, 6100..6103 malformed headers, ...) also means a scope
+  // problem — including the generic 10000 "Authentication error" that CF
+  // reuses for authorization failures. Pinned by tests; revisit after live
+  // testing against real tokens.
+  if (
+    numCode === CF_ERROR_CODES.TOKEN_MISSING_PERMISSION ||
+    (httpStatus === 403 && !KEY_MATERIAL_ERROR_CODES.has(numCode))
+  ) {
+    return {
+      category: 'permission',
+      code: numCode,
+      message,
+      recommendation: PERMISSION_RECOMMENDATIONS[operation ?? 'verify'],
+      retryable: false,
+    };
+  }
+
   // Auth errors (check against all known auth codes)
   if (AUTH_ERROR_CODES.has(numCode)) {
     return {
       category: 'auth',
       code: numCode,
       message,
-      recommendation: 'Check your email and Global API Key',
+      recommendation: 'Check your API credentials (key or token), or re-add this profile',
       retryable: false,
     };
   }

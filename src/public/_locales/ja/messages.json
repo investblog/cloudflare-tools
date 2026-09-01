@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Cloudflareゾーンの一括操作：多数のドメインをまとめて作成・確認・削除・キャッシュ削除。APIトークンとGlobal API Key対応。"
+  }
+}

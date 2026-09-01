@@ -1,0 +1,164 @@
+/* Welcome page — reuses the panel design tokens and button primitives. */
+@import '../../assets/css/theme.css';
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: var(--lh-body);
+}
+
+.welcome {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.welcome__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.welcome__logo {
+  width: 48px;
+  height: 48px;
+}
+
+.welcome__title {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.welcome__tagline {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+}
+
+.welcome__card {
+  background: var(--panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.welcome__card-title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.1rem;
+}
+
+.welcome__card-text {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+}
+
+.welcome__hint {
+  margin: var(--space-3) 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.welcome__features {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.welcome__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.welcome__feature-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--primary);
+}
+
+.welcome__feature-name {
+  color: var(--text);
+}
+
+.welcome__notes {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.welcome__note {
+  color: var(--text-muted);
+}
+
+.welcome__news {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+.welcome__bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--bg-soft);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.welcome__bell:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+
+.welcome__bell:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.welcome__bell-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.welcome__news-text {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.welcome__links {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.welcome__link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.welcome__link:hover {
+  text-decoration: underline;
+}

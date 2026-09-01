@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Thao tác hàng loạt với zone Cloudflare: tạo, kiểm tra, xóa và xóa cache nhiều tên miền cùng lúc. API token và Global API Key."
+  }
+}

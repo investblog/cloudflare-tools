@@ -7,7 +7,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 100vh;
+  /* Definite viewport height: the BODY scrolls, the tray/footer never leave
+     the screen (min-height let long zone lists grow the whole document). */
+  height: 100vh;
   background: var(--bg);
 }
 
@@ -59,6 +61,7 @@
 
 .panel__nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
@@ -66,7 +69,10 @@
 }
 
 .nav-tab {
-  padding: var(--space-2) var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2);
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-muted);
@@ -75,6 +81,21 @@
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition-fast);
+}
+
+.nav-tab__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.nav-tab--icon-only .nav-tab__label {
+  display: none;
+}
+
+.nav-tab--icon-only .nav-tab__icon {
+  width: 16px;
+  height: 16px;
 }
 
 .nav-tab:hover {
@@ -89,6 +110,7 @@
 
 .panel__body {
   flex: 1;
+  min-height: 0; /* allow the flex child to actually shrink and scroll */
   overflow-y: auto;
   padding: var(--space-4);
 }
@@ -104,6 +126,19 @@
   margin: 0;
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.footer-glyph {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* Views */
@@ -200,12 +235,14 @@
 
 /* Zone list */
 .zone-list {
-  max-height: 300px;
-  overflow-y: auto;
+  /* No inner scroll cap: the action row lives in the always-visible tray,
+     so the list may take the whole body and scroll with it. */
   margin: var(--space-4) 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
 }
+
+/* The profiles drawer scrolls its own body — keep the list unconstrained there too. */
 
 .zone-list__loading,
 .zone-list__empty {
@@ -247,6 +284,10 @@
 .zone-name,
 .zone-item__name {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.875rem;
 }
 
@@ -269,9 +310,8 @@
   color: var(--text-muted);
 }
 
-.zone-count {
-  font-size: 0.875rem;
-  color: var(--text-muted);
+.zone-count:empty {
+  display: none;
 }
 
 /* Readonly zone list (no checkboxes, no selection) */
@@ -281,6 +321,17 @@
 
 .zone-item--readonly {
   cursor: default;
+}
+
+/* Profile rows (Settings list + profiles drawer): many chips in a narrow row —
+   tighter gap, controls never shrink, the label is the only flexible part. */
+.zone-list--profiles .zone-item {
+  gap: var(--space-2);
+}
+
+.zone-list--profiles .btn,
+.zone-list--profiles .icon-btn {
+  flex-shrink: 0;
 }
 
 .zone-item--readonly:hover {
@@ -636,4 +687,277 @@
 
 .dialog__footer .btn {
   flex: 1;
+}
+
+/* Dialogs stack one layer above drawers (301-ui: +10 per level) so the
+   remove-profile confirm opened FROM the drawer is not painted under it. */
+.dialog {
+  z-index: calc(var(--z-modal) + 10);
+}
+
+/* ============================================
+   Drawer (301-ui pattern)
+   Side overlay sliding in from the right; used by the profiles switcher.
+   ============================================ */
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer[hidden] {
+  display: none;
+}
+
+.drawer__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.drawer__panel {
+  position: relative;
+  width: 88%;
+  max-width: 300px;
+  background: var(--bg);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  animation: drawer-slide-in 200ms ease-out;
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drawer__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.drawer__close {
+  padding: var(--space-1);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.drawer__close:hover {
+  color: var(--text);
+  background: var(--border-subtle);
+}
+
+.drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--panel);
+}
+
+/* ============================================
+   Dropdown (301-ui pattern)
+   Account selector: trigger styled as a field + overlay menu.
+   ============================================ */
+
+.dropdown {
+  position: relative;
+  display: block;
+}
+
+.account-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.account-trigger__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-trigger__chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.dropdown.is-open .account-trigger__chevron {
+  transform: rotate(180deg);
+}
+
+.dropdown__menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2) 0;
+  display: none;
+  z-index: var(--z-dropdown);
+}
+
+.dropdown.is-open .dropdown__menu {
+  display: block;
+}
+
+.dropdown__item {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.875rem;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.dropdown__item:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--text);
+}
+
+.dropdown__item--selected {
+  font-weight: 600;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.dropdown__item--action {
+  color: var(--text-muted);
+}
+
+.dropdown__item--action:hover {
+  color: var(--text);
+}
+
+.dropdown__divider {
+  height: 1px;
+  margin: var(--space-2) 0;
+  background: var(--border-subtle);
+  border: none;
+}
+
+/* ============================================
+   Action tray — "second footer floor"
+   Grip-handle pattern from the reference (drawer__handle/grip): a slim bar
+   that collapses the active view's action row to free space for lists.
+   ============================================ */
+
+.panel__tray {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+/* `hidden` must beat the flex display above (same trap as the action rows) */
+.panel__tray[hidden] {
+  display: none;
+}
+
+.tray__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: none;
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.tray__grip {
+  width: 32px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+  transition: background var(--transition-fast);
+}
+
+.tray__handle:hover .tray__grip {
+  background: var(--border);
+}
+
+.tray__content {
+  box-sizing: border-box;
+  padding: 0 var(--space-4) var(--space-3);
+  overflow: hidden;
+  max-height: 240px;
+  transition: max-height var(--transition-md), padding var(--transition-md);
+}
+
+.tray__content .view__actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* The hidden attribute must beat the rows' own flex display —
+   otherwise every view's action row stacks up in the tray at once. */
+.tray__content [data-tray-owner][hidden] {
+  display: none;
+}
+
+/* Progress controls align like every other tray row */
+.tray__content .progress-controls {
+  justify-content: flex-end;
+}
+
+.panel__tray--collapsed .tray__content {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* While the grip is being dragged the height follows the pointer directly */
+.panel__tray--dragging .tray__content {
+  transition: none;
 }

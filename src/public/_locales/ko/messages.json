@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Cloudflare 존 일괄 작업: 여러 도메인을 한 번에 생성·확인·삭제·캐시 퍼지. API 토큰 및 Global API Key 지원."
+  }
+}

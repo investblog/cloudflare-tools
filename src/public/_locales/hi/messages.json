@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Cloudflare ज़ोन के लिए बल्क ऑपरेशन: कई डोमेन एक साथ बनाएँ, जाँचें, हटाएँ और कैश साफ़ करें। API टोकन व Global API Key।"
+  }
+}

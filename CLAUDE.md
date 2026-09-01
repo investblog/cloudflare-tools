@@ -33,8 +33,12 @@ npm run dev          # Dev server (Chrome)
 npm run dev:firefox  # Dev server (Firefox)
 npm run build        # Production build (Chrome)
 npm run build:firefox # Production build (Firefox)
-npm run zip:all      # Create zips for store submission
+npm run build:edge   # Production build (Edge)
+npm run zip:all      # Create zips for store submission (chrome+firefox+edge)
 npm run typecheck    # TypeScript check
+npm run lint         # Biome lint (npm run lint:fix to autofix)
+npm run test         # Vitest unit tests (test/)
+npm run check        # Gate: typecheck + lint + tests
 ```
 
 ## Architecture
@@ -43,7 +47,7 @@ npm run typecheck    # TypeScript check
 ┌─────────────────────────────────────────────────────────┐
 │                  Browser Extension                      │
 ├─────────────────────────────────────────────────────────┤
-│  Side Panel (main UI)  │  Background Worker  │  Popup  │
+│  Side Panel (main UI)  │  Background Worker  │ Welcome │
 │         ↓              │         ↓           │    ↓    │
 │  - Auth form           │  - CF API client    │  Quick  │
 │  - Bulk Create         │  - Encrypted vault  │  actions│
@@ -61,7 +65,7 @@ npm run typecheck    # TypeScript check
 | Component | Access to Secrets |
 |-----------|-------------------|
 | Background Worker | ✅ Yes (only here) |
-| Side Panel / Popup | ❌ No (via messaging) |
+| Side Panel / Welcome | ❌ No (via messaging) |
 | Content Script | ❌ No (strictly isolated) |
 
 ## Project Structure
@@ -70,12 +74,10 @@ npm run typecheck    # TypeScript check
 src/
 ├── entrypoints/           # WXT entry points
 │   ├── background.ts      # Service Worker (API, vault, queues)
-│   ├── popup/             # Quick actions popup
+│   ├── sidepanel/         # Main UI
 │   │   ├── index.html
 │   │   └── main.ts
-│   └── sidepanel/         # Main UI
-│       ├── index.html
-│       └── main.ts
+│   └── welcome/           # Welcome page (once per install)
 ├── background/            # Background worker modules
 │   ├── vault.ts           # Session-only AES-256-GCM encryption
 │   ├── cf-client.ts       # Cloudflare API client
@@ -92,28 +94,30 @@ src/
 │   └── messaging/         # Message protocol (to create)
 │       └── protocol.ts    # Type-safe message passing
 └── assets/css/            # Styles (from 301.st)
-    ├── theme.css          # Design tokens
-    ├── panel.css          # Side Panel styles
-    └── popup.css          # Popup styles
+    ├── theme.css          # Design tokens + shared primitives
+    └── panel.css          # Side Panel styles
 ```
 
 ## Current Status
 
-**Version:** 0.1.0 (MVP Complete)
+**Version:** 0.2.0 (Tokens & News)
 
 All core features implemented:
-- Session-only encrypted vault (AES-256-GCM)
+- Multi-profile session-only encrypted vault (v3): Global API Key, user tokens (`cfut_`), account-owned tokens (`cfat_`), auto-detect by prefix
 - Bulk zone creation with preflight
-- Bulk zone deletion
-- Bulk cache purge
+- Bulk zone deletion; bulk cache purge incl. whole-account Select all
+- Cross-account CSV export with full pagination
+- Direct panel opening (popup removed); welcome page once per install
+- Opt-in publisher news (301.sh feed, optional permissions, off by default)
+- i18n: en + ru (`public/_locales`, `t()` from `src/shared/i18n.ts`)
 - Dashboard integration (optional, feature flag)
 
 ### Planned Enhancements
 
-**Phase 2:**
-- API Token support
+**v0.3.0:**
+- Domain distribution across accounts/profiles (free-plan zone limit spill-over)
 - DNS bulk operations
-- Zone settings bulk changes
+- Zone settings bulk changes (SSL mode, Always Use HTTPS, min TLS)
 
 **Phase 3:**
 - Firefox for Android support
@@ -128,12 +132,14 @@ https://api.cloudflare.com/client/v4
 
 ### Auth Headers
 ```typescript
-const headers = {
-  'X-Auth-Email': email,
-  'X-Auth-Key': globalApiKey,
-  'Content-Type': 'application/json',
-};
+// Global API Key                          // API tokens (cfut_/cfat_)
+{ 'X-Auth-Email': email,                   { Authorization: `Bearer ${token}` }
+  'X-Auth-Key': globalApiKey }
+// built by buildAuthHeaders() in src/shared/types/credentials.ts
 ```
+
+Verification endpoints: Global Key → `GET /user`; user token → `GET /user/tokens/verify`;
+account-owned token → `GET /accounts/{id}/tokens/verify`.
 
 ### Key Endpoints
 
@@ -270,9 +276,9 @@ await ledger.updateTask(taskId, {
 
 ## Known Limitations
 
-1. **Global API Key only** (Phase 1) — API Token support in Phase 2
-2. **Content Script disabled by default** — Feature flag for store compliance
-3. **No i18n yet** — English only in MVP
+1. **Content Script disabled by default** — Feature flag for store compliance
+2. **`cfat_` + `GET /accounts`** — account discovery for account-owned tokens is probed with a manual Account-ID fallback (unverified whether CF allows it without extra scopes)
+3. **One profile active at a time** — running batches are stamped with their profile and are safe across switches; parallel multi-profile batches come with v0.3.0
 
 ## Related Resources
 

@@ -1,0 +1,590 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Массовые операции с зонами Cloudflare: создание, проверка, удаление, очистка кэша пачками. API-токены и Global API Key."
+  },
+  "tabCreate": {
+    "message": "Создание"
+  },
+  "tabCheck": {
+    "message": "Проверка"
+  },
+  "tabDelete": {
+    "message": "Удаление"
+  },
+  "tabPurge": {
+    "message": "Кэш"
+  },
+  "tabSettings": {
+    "message": "Настройки"
+  },
+  "statusConnected": {
+    "message": "Подключено"
+  },
+  "statusDisconnected": {
+    "message": "Не подключено"
+  },
+  "titleLogin": {
+    "message": "Войти"
+  },
+  "titleDisconnect": {
+    "message": "Отключиться"
+  },
+  "titleToggleTheme": {
+    "message": "Переключить тему"
+  },
+  "titleSwitchProfile": {
+    "message": "Профили"
+  },
+  "loading": {
+    "message": "Загрузка..."
+  },
+  "authTitleAdd": {
+    "message": "Подключите профиль Cloudflare."
+  },
+  "authTitleReauth": {
+    "message": "Введите секрет для «$1» ещё раз"
+  },
+  "authIntroHint": {
+    "message": "Редиректы, TDS и управление доменами →"
+  },
+  "authSecretLabel": {
+    "message": "API-токен или Global API Key"
+  },
+  "authSecretLink": {
+    "message": "Создать API-токен или взять Global API Key →"
+  },
+  "authKindLabel": {
+    "message": "Тип ключа"
+  },
+  "authKindChoose": {
+    "message": "Выберите тип…"
+  },
+  "authKindHint": {
+    "message": "У старых токенов нет префикса — выберите тип вручную."
+  },
+  "authEmailLabel": {
+    "message": "Email аккаунта Cloudflare"
+  },
+  "authAccountIdLabel": {
+    "message": "ID аккаунта"
+  },
+  "authAccountIdHint": {
+    "message": "Дашборд Cloudflare → главная аккаунта → Account ID."
+  },
+  "authLabelLabel": {
+    "message": "Название (необязательно)"
+  },
+  "authLabelPlaceholder": {
+    "message": "например, Основной аккаунт"
+  },
+  "authConnect": {
+    "message": "Подключить"
+  },
+  "authUseOtherProfile": {
+    "message": "Выбрать другой профиль"
+  },
+  "authAddNew": {
+    "message": "Добавить новый профиль"
+  },
+  "authDetected": {
+    "message": "Определён тип: $1"
+  },
+  "authNoPrefix": {
+    "message": "Префикс не распознан — выберите тип ключа ниже."
+  },
+  "authFailed": {
+    "message": "Не удалось авторизоваться"
+  },
+  "kindGlobalKey": {
+    "message": "Global Key"
+  },
+  "kindUserToken": {
+    "message": "User Token"
+  },
+  "kindAccountToken": {
+    "message": "Account Token"
+  },
+  "kindOptionUserToken": {
+    "message": "Пользовательский API-токен"
+  },
+  "kindOptionAccountToken": {
+    "message": "Токен аккаунта (account-owned)"
+  },
+  "kindOptionGlobalKey": {
+    "message": "Global API Key"
+  },
+  "profilesTitle": {
+    "message": "Профили"
+  },
+  "profileActive": {
+    "message": "активен"
+  },
+  "profileReenterBadge": {
+    "message": "нужен секрет"
+  },
+  "profileSwitch": {
+    "message": "Выбрать"
+  },
+  "profileReenter": {
+    "message": "Ввести секрет"
+  },
+  "profileRemoveTitle": {
+    "message": "Удалить профиль"
+  },
+  "profileRemoveConfirmTitle": {
+    "message": "Удаление профиля"
+  },
+  "profileRemoveConfirmMsg": {
+    "message": "Удалить профиль «$1»? Его сохранённый секрет будет стёрт."
+  },
+  "profileRemoveConfirmBtn": {
+    "message": "Удалить"
+  },
+  "profileSwitchFailed": {
+    "message": "Не удалось сменить профиль"
+  },
+  "profileRemoveFailed": {
+    "message": "Не удалось удалить профиль"
+  },
+  "profileAddBtn": {
+    "message": "Добавить профиль"
+  },
+  "profileNone": {
+    "message": "Профилей пока нет."
+  },
+  "profilesHint": {
+    "message": "Global API Key или API-токены. Секреты шифруются на время сессии браузера."
+  },
+  "accountLabel": {
+    "message": "Аккаунт"
+  },
+  "accountSelectPlaceholder": {
+    "message": "Выберите аккаунт..."
+  },
+  "createTitle": {
+    "message": "Массовое создание зон"
+  },
+  "createDomainsLabel": {
+    "message": "Домены"
+  },
+  "createDomainsDetected": {
+    "message": "доменов найдено"
+  },
+  "createZoneSettings": {
+    "message": "Параметры зон"
+  },
+  "createJumpStart": {
+    "message": "Импортировать существующие DNS-записи домена"
+  },
+  "createZoneType": {
+    "message": "Тип зоны"
+  },
+  "createTypeFull": {
+    "message": "Full"
+  },
+  "createTypePartial": {
+    "message": "Partial (CNAME)"
+  },
+  "createTypeHint": {
+    "message": "Full — смена NS на Cloudflare. Partial — текущие NS остаются, проксирование через CNAME (только планы Business+)."
+  },
+  "createWillCreate": {
+    "message": "будет создано"
+  },
+  "createExists": {
+    "message": "уже есть (пропуск)"
+  },
+  "createInvalid": {
+    "message": "невалидных"
+  },
+  "createDuplicate": {
+    "message": "дублей"
+  },
+  "createCheckFirst": {
+    "message": "Сначала проверить"
+  },
+  "createStart": {
+    "message": "Запустить"
+  },
+  "checkTitle": {
+    "message": "Проверка зон"
+  },
+  "zonesLoading": {
+    "message": "Загрузка зон..."
+  },
+  "zonesEmpty": {
+    "message": "В этом аккаунте зон не найдено."
+  },
+  "checkRefresh": {
+    "message": "Обновить"
+  },
+  "checkExport": {
+    "message": "CSV"
+  },
+  "checkExportAll": {
+    "message": "Все CSV"
+  },
+  "checkExportAllTitle": {
+    "message": "Все зоны всех аккаунтов, со всеми страницами"
+  },
+  "exportFailedMsg": {
+    "message": "Экспорт не удался"
+  },
+  "deleteTitle": {
+    "message": "Массовое удаление зон"
+  },
+  "selectedCount": {
+    "message": "выбрано"
+  },
+  "deleteSelected": {
+    "message": "Удалить выбранные"
+  },
+  "deleteConfirmTitle": {
+    "message": "Удаление зон"
+  },
+  "deleteConfirmMsg": {
+    "message": "Удалить $1 зон(ы)? Действие необратимо."
+  },
+  "deleteConfirmBtn": {
+    "message": "Удалить"
+  },
+  "deleteStartFailed": {
+    "message": "Не удалось запустить удаление"
+  },
+  "deleteProgress": {
+    "message": "Удаление зон..."
+  },
+  "purgeTitle": {
+    "message": "Массовая очистка кэша"
+  },
+  "purgeSelectAll": {
+    "message": "Выбрать все"
+  },
+  "purgeSelectAllTitle": {
+    "message": "Загрузить и выбрать все зоны аккаунта"
+  },
+  "purgeEverything": {
+    "message": "Очистить кэш"
+  },
+  "purgeConfirmTitle": {
+    "message": "Очистка кэша"
+  },
+  "purgeConfirmMsg": {
+    "message": "Очистить кэш для $1 зон(ы)?"
+  },
+  "purgeConfirmBtn": {
+    "message": "Очистить"
+  },
+  "purgeStartFailed": {
+    "message": "Не удалось запустить очистку"
+  },
+  "purgeProgress": {
+    "message": "Очистка кэша..."
+  },
+  "zonesLoadFailed": {
+    "message": "Не удалось загрузить зоны"
+  },
+  "progressProcessing": {
+    "message": "Выполняется..."
+  },
+  "progressSuccess": {
+    "message": "успешно"
+  },
+  "progressFailed": {
+    "message": "с ошибкой"
+  },
+  "progressSkipped": {
+    "message": "пропущено"
+  },
+  "progressEta": {
+    "message": "Осталось:"
+  },
+  "progressCalculating": {
+    "message": "расчёт..."
+  },
+  "progressPause": {
+    "message": "Пауза"
+  },
+  "progressResume": {
+    "message": "Продолжить"
+  },
+  "progressCancel": {
+    "message": "Отменить"
+  },
+  "resultsTitle": {
+    "message": "Результаты"
+  },
+  "resultsSucceeded": {
+    "message": "успешно,"
+  },
+  "resultsFailedWord": {
+    "message": "с ошибкой,"
+  },
+  "resultsSkippedWord": {
+    "message": "пропущено"
+  },
+  "resultsCtaText": {
+    "message": "Настройте редиректы, TDS-правила и другое для новых доменов"
+  },
+  "resultsCtaBtn": {
+    "message": "Открыть 301.st Dashboard →"
+  },
+  "resultsFailedHeading": {
+    "message": "С ошибкой"
+  },
+  "resultsRetryFailed": {
+    "message": "Повторить неудачные"
+  },
+  "resultsExportFailed": {
+    "message": "Экспорт неудачных"
+  },
+  "resultsDone": {
+    "message": "Готово"
+  },
+  "settingsTitle": {
+    "message": "Настройки"
+  },
+  "settingsRateLimits": {
+    "message": "Лимиты запросов"
+  },
+  "settingsConcurrency": {
+    "message": "Максимум одновременных запросов"
+  },
+  "settingsAppearance": {
+    "message": "Оформление"
+  },
+  "settingsTheme": {
+    "message": "Тема"
+  },
+  "themeAuto": {
+    "message": "Авто (системная)"
+  },
+  "themeDark": {
+    "message": "Тёмная"
+  },
+  "themeLight": {
+    "message": "Светлая"
+  },
+  "settingsThemeHint": {
+    "message": "«Авто» следует настройке браузера/ОС."
+  },
+  "settingsNews": {
+    "message": "Новости издателя"
+  },
+  "settingsNewsToggle": {
+    "message": "Сообщать об обновлениях инструментов 301.st"
+  },
+  "settingsNewsHint": {
+    "message": "Только по явному включению: проверка фида 301.sh несколько раз в день, без идентификаторов. По умолчанию выключено."
+  },
+  "settingsDashboard": {
+    "message": "Интеграция с Dashboard"
+  },
+  "settingsDashboardToggle": {
+    "message": "Кнопки в Cloudflare Dashboard"
+  },
+  "settingsDashboardHint": {
+    "message": "Добавляет кнопки «Bulk Add» и «Export» в Cloudflare Dashboard."
+  },
+  "settingsDanger": {
+    "message": "Опасная зона"
+  },
+  "settingsClearData": {
+    "message": "Стереть все данные"
+  },
+  "settingsClearDataHint": {
+    "message": "Удаляет все сохранённые учётные данные и настройки."
+  },
+  "settingsClearConfirmTitle": {
+    "message": "Стереть все данные"
+  },
+  "settingsClearConfirmMsg": {
+    "message": "Будут удалены все сохранённые учётные данные и настройки. Продолжить?"
+  },
+  "settingsClearConfirmBtn": {
+    "message": "Стереть"
+  },
+  "settingsClearFailed": {
+    "message": "Не удалось стереть данные"
+  },
+  "settingsAbout": {
+    "message": "О расширении"
+  },
+  "settingsAboutText": {
+    "message": "Бесплатные массовые операции для аккаунтов Cloudflare."
+  },
+  "settingsWhatsNew": {
+    "message": "Что нового"
+  },
+  "settingsPromoTitle": {
+    "message": "Нужно больше? Попробуйте"
+  },
+  "settingsPrivacy": {
+    "message": "Политика конфиденциальности"
+  },
+  "footerPoweredBy": {
+    "message": "Работает на"
+  },
+  "footerRate": {
+    "message": "Оценить ★"
+  },
+  "dialogConfirm": {
+    "message": "Подтверждение"
+  },
+  "dialogNotice": {
+    "message": "Уведомление"
+  },
+  "dialogError": {
+    "message": "Ошибка"
+  },
+  "dialogCancel": {
+    "message": "Отмена"
+  },
+  "dialogOk": {
+    "message": "OK"
+  },
+  "dialogClose": {
+    "message": "Закрыть"
+  },
+  "welTitle": {
+    "message": "Добро пожаловать — Cloudflare Tools"
+  },
+  "welTagline": {
+    "message": "Массовые операции с зонами Cloudflare — прямо в браузере."
+  },
+  "welGetStarted": {
+    "message": "Начало работы"
+  },
+  "welGetStartedText": {
+    "message": "Откройте панель, подключите профиль (API-токен или Global API Key), выберите аккаунт — и вставьте список доменов."
+  },
+  "welOpenPanel": {
+    "message": "Открыть панель"
+  },
+  "welPinHint": {
+    "message": "Совет: закрепите расширение на панели инструментов — панель открывается в один клик."
+  },
+  "welWhatsInside": {
+    "message": "Что внутри"
+  },
+  "welWhatsNew": {
+    "message": "Что нового в v$1"
+  },
+  "welPrivacyTitle": {
+    "message": "Приватность по умолчанию"
+  },
+  "welPrivacyText": {
+    "message": "Без аналитики и трекинга. Запросы идут напрямую в api.cloudflare.com; учётные данные шифруются на время сессии и не покидают устройство."
+  },
+  "welLink301": {
+    "message": "301.st — редиректы и TDS"
+  },
+  "welLinkRate": {
+    "message": "Оценить расширение ★"
+  },
+  "newsTitleOn": {
+    "message": "Выключить уведомления об обновлениях"
+  },
+  "newsTitleOff": {
+    "message": "Включить уведомления об обновлениях"
+  },
+  "newsStateOn": {
+    "message": "Уведомления об обновлениях включены"
+  },
+  "newsStateOff": {
+    "message": "Узнавать об обновлениях инструментов 301.st (opt-in, без идентификаторов)"
+  },
+  "welFeatCreate": {
+    "message": "Вставьте любой текст с доменами — массовое добавление зон с предпроверкой"
+  },
+  "welFeatCheck": {
+    "message": "Список зон по аккаунту, NS и статусы, экспорт CSV по всем аккаунтам"
+  },
+  "welFeatDelete": {
+    "message": "Массовое удаление зон с подтверждением"
+  },
+  "welFeatPurge": {
+    "message": "Purge Everything для выбранных зон или всего аккаунта сразу"
+  },
+  "welFeatProfiles": {
+    "message": "Global API Key или API-токены (пользовательские / аккаунта), быстрое переключение"
+  },
+  "createDomainsPlaceholder": {
+    "message": "Вставьте домены, URL или любой текст с доменами...\n\nexample.com\nhttps://site.ru/page\ndomain.net"
+  },
+  "authAccountIdPlaceholder": {
+    "message": "ID аккаунта — 32 символа"
+  },
+  "createProgress": {
+    "message": "Создание зон..."
+  },
+  "zonesCountLabel": {
+    "message": "Зон: $1"
+  },
+  "createStartFailed": {
+    "message": "Не удалось запустить операцию"
+  },
+  "cancelConfirmTitle": {
+    "message": "Отмена операции"
+  },
+  "cancelConfirmMsg": {
+    "message": "Точно отменить? Прогресс будет потерян."
+  },
+  "retryProgress": {
+    "message": "Повтор неудачных..."
+  },
+  "retryFailedMsg": {
+    "message": "Повтор не удался"
+  },
+  "retryErrorTitle": {
+    "message": "Ошибка повтора"
+  },
+  "accountRequiredTitle": {
+    "message": "Нужен аккаунт"
+  },
+  "accountRequiredMsg": {
+    "message": "Выберите аккаунт"
+  },
+  "noDomainsTitle": {
+    "message": "Нет доменов"
+  },
+  "noDomainsMsg": {
+    "message": "Во вводе не найдено доменов"
+  },
+  "noDomainsPreflightMsg": {
+    "message": "Нечего создавать. Сначала запустите предпроверку."
+  },
+  "preflightErrorTitle": {
+    "message": "Ошибка предпроверки"
+  },
+  "progressCompleting": {
+    "message": "завершение..."
+  },
+  "promoRedirects": {
+    "message": "Edge Redirects — массовые 301/302 с ответом <50 мс"
+  },
+  "promoTds": {
+    "message": "TDS — правила фильтрации по гео, устройствам и ботам"
+  },
+  "promoMulti": {
+    "message": "Оркестрация нескольких аккаунтов Cloudflare"
+  },
+  "promoMonitoring": {
+    "message": "Мониторинг здоровья доменов и алерты"
+  },
+  "accountAddProfile": {
+    "message": "Добавить профиль…"
+  },
+  "settingsManageProfiles": {
+    "message": "Управление профилями"
+  },
+  "checkExportTitle": {
+    "message": "Экспорт CSV — текущий аккаунт"
+  },
+  "trayToggleTitle": {
+    "message": "Показать / скрыть действия"
+  }
+}

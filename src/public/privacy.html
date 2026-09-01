@@ -44,7 +44,7 @@
 </head>
 <body>
   <h1>Cloudflare Tools Privacy Policy</h1>
-  <p class="update">Last updated: January 2026</p>
+  <p class="update">Last updated: September 2026</p>
 
   <h2>Data Collection</h2>
   <p>Cloudflare Tools does not collect any user data. We have no servers, no analytics, and no tracking.</p>
@@ -52,7 +52,7 @@
   <h2>Data Storage</h2>
   <p>The following data is stored locally on your device:</p>
   <ul>
-    <li><strong>Cloudflare credentials</strong> (email and API key) — encrypted with AES-256-GCM using a random 256-bit key</li>
+    <li><strong>Cloudflare credentials</strong> (API tokens or email + Global API Key, one entry per profile) — encrypted with AES-256-GCM using a random 256-bit key</li>
     <li><strong>Settings</strong> (preferences) — stored in browser's local storage</li>
     <li><strong>Operation logs</strong> (batch history) — stored in IndexedDB for resume functionality</li>
   </ul>
@@ -62,8 +62,19 @@
   <p>The extension only connects to:</p>
   <ul>
     <li><strong>api.cloudflare.com</strong> — to perform zone operations using your credentials</li>
+    <li><strong>301.sh</strong> — <em>only if you explicitly enable publisher news</em> (see below)</li>
   </ul>
   <p>No other external connections are made.</p>
+
+  <h2>Publisher News (Opt-in)</h2>
+  <p>The extension can notify you about 301.st tool updates. This feature is <strong>disabled by default</strong>:</p>
+  <ul>
+    <li>Nothing is fetched until you turn it on (welcome page bell or Settings &rarr; Publisher News)</li>
+    <li>Enabling it asks the browser for extra permissions (notifications and access to 301.sh)</li>
+    <li>When enabled, the extension fetches a public JSON feed from <code>https://301.sh/posts.json</code> a few times a day</li>
+    <li>The request carries <strong>no identifiers, no credentials, and no query parameters</strong> — it is a plain read of a public file</li>
+    <li>Disabling the toggle removes the granted permissions and stops all fetches immediately</li>
+  </ul>
 
   <h2>Encryption</h2>
   <p>Your Cloudflare API key is encrypted using:</p>
@@ -80,7 +91,7 @@
     <li>You click "Disconnect" in the extension</li>
     <li>You clear browser data</li>
   </ul>
-  <p>You will need to re-enter your Cloudflare email and API key to continue using the extension.</p>
+  <p>You will need to re-enter your API token or Global API Key to continue using the extension. Profile names and settings survive; secrets do not.</p>
 
   <h2>Data Deletion</h2>
   <p>You can delete all stored data at any time from Settings → "Clear All Data". This will:</p>

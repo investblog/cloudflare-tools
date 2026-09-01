@@ -165,10 +165,6 @@ export function parseDomains(text: string, rootOnly = true): ParseResult {
  */
 export function countDomains(text: string): number {
   const matches = extractPotentialDomains(text);
-  const unique = new Set(
-    matches
-      .map(normalizeDomain)
-      .filter((d) => d && hasValidTLD(d))
-  );
+  const unique = new Set(matches.map(normalizeDomain).filter((d) => d && hasValidTLD(d)));
   return unique.size;
 }

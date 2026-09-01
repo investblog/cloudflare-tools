@@ -163,7 +163,6 @@ function isZoneDetailPage(): boolean {
 function openSidePanel(): void {
   // Send message to background to open side panel
   chrome.runtime.sendMessage({ type: 'OPEN_SIDE_PANEL' }).catch(() => {
-    // Fallback: try to open extension popup
     console.log('[CF Tools] Could not open side panel');
   });
 }

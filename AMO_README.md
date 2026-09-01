@@ -55,11 +55,11 @@ cd cloudflare-tools
 npm install
 ```
 
-This installs:
+This installs (all dev-time only, from the public npm registry, no private packages):
 - `wxt` (v0.19.x) — Extension build tool
 - `typescript` (v5.7.x) — TypeScript compiler
-
-All dependencies are from npm registry. No private packages.
+- `@biomejs/biome` — linter/formatter (not needed for the build itself)
+- `vitest` — unit test runner (not needed for the build itself)
 
 ### 4. Build for Firefox
 
@@ -81,21 +81,19 @@ The `dist/firefox-mv2/` directory should contain:
 dist/firefox-mv2/
 ├── manifest.json
 ├── background.js
-├── popup.html
 ├── sidepanel.html
+├── welcome.html
 ├── privacy.html
-├── chunks/
-│   ├── popup-*.js
-│   ├── sidepanel-*.js
-│   └── theme-*.js
+├── chunks/            # shared JS chunks (content-hashed names)
 ├── content-scripts/
 │   └── cf-dashboard.js
-├── assets/
-│   ├── popup-*.css
-│   ├── sidepanel-*.css
-│   └── theme-*.css
+├── assets/            # CSS (content-hashed names)
+├── _locales/
+│   ├── en/messages.json
+│   └── ru/messages.json
 └── icons/
     ├── icon-16.png
+    ├── icon-32.png
     ├── icon-48.png
     └── icon-128.png
 ```
@@ -106,7 +104,7 @@ dist/firefox-mv2/
 npm run zip:firefox
 ```
 
-Output: `.output/cloudflare-tools-0.1.0-firefox.zip`
+Output: `dist/cloudflare-tools-<version>-firefox.zip`
 
 ---
 
@@ -133,21 +131,24 @@ The build process uses [WXT](https://wxt.dev/), an open-source extension framewo
 ```
 src/
 ├── entrypoints/           # Extension entry points
-│   ├── background.ts      # Service worker
+│   ├── background.ts      # Background script
 │   ├── cf-dashboard.content.ts  # Content script
-│   ├── popup/             # Popup UI
-│   └── sidepanel/         # Sidebar UI
+│   ├── sidepanel/         # Sidebar UI
+│   └── welcome/           # Welcome page (opened once after install)
 ├── background/            # Background modules
-│   ├── vault.ts           # Credential encryption
+│   ├── vault.ts           # Credential encryption (multi-profile)
 │   ├── cf-client.ts       # Cloudflare API client
+│   ├── news.ts            # Opt-in publisher news
 │   ├── queue.ts           # Rate limiting
 │   └── ledger.ts          # Task storage
+├── engine/                # Pure logic (news feed parsing; unit-tested)
 ├── shared/                # Shared utilities
 │   ├── types/             # TypeScript types
 │   ├── domains/           # Domain parsing
 │   ├── messaging/         # Message protocol
-│   └── theme.ts           # Theme utilities
+│   └── i18n.ts, news.ts, theme.ts, dom.ts
 ├── public/                # Static files (copied as-is)
+│   ├── _locales/          # en + ru translations
 │   └── privacy.html
 └── assets/                # CSS stylesheets
 ```
@@ -178,6 +179,25 @@ This extension has **no runtime dependencies**. All code is original.
 ### TypeScript errors
 - Run `npm run typecheck` to see any type issues
 - Ensure you're using the correct Node.js version
+
+---
+
+## Permissions Rationale
+
+**Required:**
+- `storage` — encrypted credential vault, settings, task history
+- `alarms` (Firefox only) — Firefox does not allow `alarms` as an optional permission
+  (AMO flags `MANIFEST_OPTIONAL_PERMISSIONS` and `permissions.request` rejects it);
+  it is a no-prompt permission and no alarm is created unless publisher news is enabled
+- `https://api.cloudflare.com/*` — the extension's core purpose (zone operations)
+- `https://dash.cloudflare.com/*` — optional Dashboard buttons (feature-flagged, default off)
+
+**Optional (requested at runtime only if the user enables publisher news):**
+- `notifications` — show update notifications
+- `https://301.sh/*` — fetch the public news feed (no identifiers sent; see privacy policy)
+
+The news feature is opt-in and off by default: with the toggle off the extension makes
+zero requests to 301.sh. `data_collection_permissions.required` is `['none']`.
 
 ---
 

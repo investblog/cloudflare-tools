@@ -18,7 +18,7 @@ export function isPunycode(domain: string): boolean {
  * Check if domain contains non-ASCII characters
  */
 export function isUnicode(domain: string): boolean {
-  // eslint-disable-next-line no-control-regex
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional full-ASCII range test
   return /[^\x00-\x7F]/.test(domain);
 }
 
@@ -88,10 +88,7 @@ export function decodeDomain(domain: string): string {
  * @param domain - Domain name (can be punycode or unicode)
  * @param mode - 'compact' shows unicode only, 'full' shows both if different
  */
-export function formatDomainDisplay(
-  domain: string,
-  mode: 'compact' | 'full' = 'compact'
-): string {
+export function formatDomainDisplay(domain: string, mode: 'compact' | 'full' = 'compact'): string {
   const unicode = decodeDomain(domain);
   const ascii = encodeDomain(domain);
 

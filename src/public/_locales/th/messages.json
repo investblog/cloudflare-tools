@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "จัดการโซน Cloudflare แบบกลุ่ม: สร้าง ตรวจสอบ ลบ และล้างแคชหลายโดเมนพร้อมกัน รองรับ API Token และ Global API Key"
+  }
+}

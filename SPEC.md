@@ -2,41 +2,46 @@
 
 ## Overview
 
-**Cloudflare Tools** is a browser extension for bulk operations with Cloudflare zones. Works directly with CF API using Global API Key, bypassing CORS restrictions.
+**Cloudflare Tools** is a browser extension for bulk operations with Cloudflare zones. Works directly with the CF API using API tokens or the Global API Key, bypassing CORS restrictions.
 
 | | |
 |---|---|
 | **Type** | Browser Extension |
-| **Platforms** | Chrome (Side Panel), Firefox (Sidebar) |
+| **Platforms** | Chrome/Edge (Side Panel), Firefox (Sidebar) |
 | **Stack** | TypeScript + WXT + Vanilla DOM |
+| **Quality gate** | `npm run check` = tsc + Biome + Vitest |
 | **Homepage** | https://301.st |
 | **Repository** | https://github.com/investblog/cloudflare-tools |
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  Browser Extension                       │
-├─────────────────────────────────────────────────────────┤
-│  Side Panel (UI)  │  Background Worker  │    Popup      │
-│        ↓          │         ↓           │      ↓        │
-│  - Auth form      │  - CF API client    │  Quick actions│
-│  - Bulk Create    │  - Encrypted vault  │  Open Panel   │
-│  - Bulk Delete    │  - Request queues   │               │
-│  - Bulk Purge     │  - Task ledger      │               │
-│  - Progress       │  - Message routing  │               │
-└─────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-             Cloudflare API (direct, no proxy)
+┌──────────────────────────────────────────────────────────┐
+│                   Browser Extension                       │
+├──────────────────────────────────────────────────────────┤
+│  Side Panel (UI)    │  Background Worker   │  Welcome    │
+│        ↓            │         ↓            │  page       │
+│  - Profile manager  │  - CF API client     │  (once per  │
+│  - Bulk Create      │  - Multi-profile     │   install)  │
+│  - Check / Export   │    encrypted vault   │             │
+│  - Bulk Delete      │  - Request queues    │             │
+│  - Bulk Purge       │  - Task ledger       │             │
+│  - Progress         │  - Publisher news    │             │
+│  - Settings + News  │  - Message routing   │             │
+└──────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+              Cloudflare API (direct, no proxy)
 ```
+
+The toolbar button opens the panel directly: Chromium via `sidePanel.setPanelBehavior({openPanelOnActionClick})`, Firefox via `sidebarAction.open()` inside the `browser_action.onClicked` gesture (plus the `_execute_sidebar_action` command). There is no popup.
 
 ### Security Isolation
 
 | Component | Access to Secrets |
 |-----------|-------------------|
 | Background Worker | Yes (only here) |
-| Side Panel / Popup | No (via messaging) |
+| Side Panel / Welcome | No (via messaging) |
 | Content Script | No (strictly isolated) |
 
 ## Project Structure
@@ -44,146 +49,97 @@
 ```
 src/
 ├── entrypoints/
-│   ├── background.ts          # Service Worker entry
+│   ├── background.ts           # Service Worker entry (messages, batches, welcome, news setup)
 │   ├── cf-dashboard.content.ts # Dashboard integration (optional)
-│   ├── popup/
-│   │   ├── index.html
-│   │   └── main.ts
-│   └── sidepanel/
-│       ├── index.html
-│       └── main.ts
+│   ├── sidepanel/              # Main UI (index.html + main.ts)
+│   └── welcome/                # Welcome page, opened once per install
 ├── background/
-│   ├── index.ts               # Module exports
-│   ├── vault.ts               # Session-only AES-256 encryption
-│   ├── cf-client.ts           # Cloudflare API client
-│   ├── queue.ts               # Rate-limited request pools
-│   └── ledger.ts              # IndexedDB task persistence
+│   ├── index.ts                # Module exports
+│   ├── vault.ts                # Multi-profile session-only encryption (v3)
+│   ├── cf-client.ts            # Cloudflare API client (tokens + Global Key)
+│   ├── news.ts                 # Opt-in publisher news (alarm, fetch, notifications)
+│   ├── queue.ts                # Rate-limited request pools
+│   └── ledger.ts               # IndexedDB task persistence
+├── engine/
+│   └── news.ts                 # Pure news-feed logic (parse/diff/cap) — unit-tested
 ├── shared/
 │   ├── types/
-│   │   ├── api.ts             # CFUser, CFAccount, CFZone
-│   │   ├── tasks.ts           # TaskEntry, BatchInfo
-│   │   └── errors.ts          # Error normalization
-│   ├── domains/
-│   │   ├── parser.ts          # parseDomains()
-│   │   └── idn.ts             # encodeDomain(), decodeDomain()
-│   ├── messaging/
-│   │   └── protocol.ts        # Type-safe message passing
-│   └── theme.ts               # Theme utilities
+│   │   ├── api.ts              # CFUser, CFAccount, CFZone, CFTokenVerifyResult
+│   │   ├── credentials.ts      # CFCredential union, detect/buildAuthHeaders/verifyPathFor
+│   │   ├── tasks.ts            # TaskEntry, BatchInfo(+profileId), resolveBatchProfileId
+│   │   └── errors.ts           # normalizeError (incl. permission category)
+│   ├── domains/                # parseDomains(), IDN encode/decode
+│   ├── messaging/protocol.ts   # Type-safe message passing
+│   ├── i18n.ts                 # t() wrapper over chrome.i18n
+│   ├── news.ts                 # News opt-in flow (optional permissions)
+│   ├── dom.ts                  # createSvgIcon, trustedHTML (no innerHTML)
+│   ├── whats-new.ts            # Bundled release notes
+│   └── theme.ts                # Theme utilities
 ├── public/
-│   └── privacy.html           # Privacy policy (bundled)
-└── assets/css/
-    ├── theme.css
-    ├── panel.css
-    └── popup.css
+│   ├── _locales/{en,ru}/       # UI translations (default_locale: en)
+│   └── privacy.html            # Privacy policy (bundled)
+└── assets/css/                 # theme.css (tokens + primitives), panel.css
+test/                           # Vitest unit tests (pure modules only)
 ```
 
-## Security Model
+## Credentials & Vault (v3)
 
-### Session-Only Encryption
+### Credential kinds
 
-Credentials are encrypted at rest using session-based encryption:
+| Kind | Secret prefix | Auth headers | Verify endpoint | Accounts |
+|---|---|---|---|---|
+| Global API Key | `cfk_` or legacy 37-hex | `X-Auth-Email` + `X-Auth-Key` | `GET /user` | `GET /accounts` |
+| User API token | `cfut_` | `Authorization: Bearer` | `GET /user/tokens/verify` | `GET /accounts` |
+| Account-owned token | `cfat_` | `Authorization: Bearer` | `GET /accounts/{id}/tokens/verify` | fixed single account |
 
-| Component | Storage | Lifetime |
-|-----------|---------|----------|
-| **Encrypted API key** | `chrome.storage.local` | Persistent |
-| **AES-256 encryption key** | `chrome.storage.session` | Browser session |
+- The kind is auto-detected from the secret (`detectCredentialKind`); unprefixed legacy tokens get a manual "credential type" selector.
+- Account-owned tokens: the account id is discovered via `GET /accounts` when possible, with a manual Account-ID input fallback (`ACCOUNT_ID_REQUIRED`).
+- Recommended token permission for zone creation: **Zone → Zone → Edit** on account resources (a Global API Key is NOT required).
 
-**Flow:**
-1. User enters Email + API Key
-2. Random AES-256 key generated
-3. API Key encrypted with AES-256-GCM
-4. Encryption key stored in session storage
-5. On browser close → session cleared → credentials locked
-6. On next browser start → user re-enters credentials
+### Vault model
 
-**No master password required** — simpler UX while maintaining security isolation.
+- `StoredVaultV3 = { version: 3, profiles: StoredProfile[], activeProfileId }` in `chrome.storage.local`.
+- One random AES-256-GCM **session key** encrypts every profile secret (unique IV each); the key + its `keyId` live in `chrome.storage.session` (Firefox MV2: in-memory fallback).
+- Each profile stores the `keyId` that encrypted it → after a browser restart profiles report `needsSecret` and are re-entered via `PROFILE_REAUTH` (metadata survives, secrets do not).
+- Lossless migration v2 → v3: the old single entry becomes an active `global-key` profile with ciphertext/IV carried byte-identical.
+- Credentials are verified **before** they are stored.
 
-### Message Validation
+### Batch/profile correctness
 
-Background worker validates all incoming messages:
-- Extension pages: full access
-- Content scripts (dash.cloudflare.com): limited allowlist
-- Other origins: rejected
+`BatchInfo.profileId` stamps every batch with the profile it started under; `processBatch`, `RETRY_FAILED` and `RESUME_BATCH` resolve credentials from the stamp. Switching the active profile mid-batch is safe and never re-routes a running batch. `PROFILE_REMOVE` refuses (`PROFILE_IN_USE`) while a running batch uses the profile.
 
-## Features
+## Features (v0.2.0)
 
-### Implemented (v0.1.0)
+- **Profiles** — add/switch/remove/re-enter; header switcher (≥2 profiles) + Settings manager.
+- **Bulk Zone Creation** — parser (IDN aware), preflight (will-create/exists/invalid/duplicate), batch with retry.
+- **Check Zones** — per-account list, CSV export, cross-account "Export all accounts" with full pagination.
+- **Bulk Delete** — multi-select + confirmation.
+- **Bulk Purge** — multi-select or "Select all" (loads every page of the account's zones).
+- **Publisher news (opt-in)** — see below.
+- **Welcome page** — once per install (storage flag; fires on install and update reasons).
+- **i18n** — en (default) + ru; `t()` + static-markup localization pass.
+- **Dashboard Integration** — optional buttons on dash.cloudflare.com (feature flag, default off).
 
-#### Authentication
-- Email + Global API Key input
-- Credential validation via `GET /user`
-- Account list via `GET /accounts`
-- Session-only encrypted storage
-- Lock/Disconnect functionality
+## Publisher News (opt-in)
 
-#### Bulk Zone Creation
-- Textarea for domain input (paste any text)
-- Domain parser with IDN/punycode support
-- Preflight check (will-create/exists/invalid/duplicate)
-- Account and zone type selection
-- Jump start option
-- Batch processing with progress
-- Retry failed domains
-
-#### Bulk Zone Deletion
-- Account selector with zone filtering
-- Paginated zone list with search
-- Multi-select for batch deletion
-- Confirmation dialog
-- Progress tracking
-
-#### Bulk Cache Purge
-- Account selector with zone filtering
-- Paginated zone list with search
-- Multi-select zones
-- "Purge Everything" for selected zones
-- Progress tracking
-
-#### Export
-- Export zones to CSV
-- Export failed tasks
-
-#### Dashboard Integration (Optional)
-- "Bulk Add" button on CF Dashboard
-- "Export Zones" button
-- Feature flag controlled (default: off)
-
-### Planned
-
-#### Phase 2: Enhancements
-- API Token support (scoped permissions)
-- DNS record bulk operations
-- Zone settings bulk changes
-- Import domains from CSV
-
-#### Phase 3: Mobile
-- Firefox for Android support
-- Responsive UI for narrow screens
-- Touch-optimized controls
+- Feed: `https://301.sh/posts.json` (shared across 301.st extensions), checked every 6h via `alarms`.
+- **Off by default; zero network until enabled.** Toggles: welcome-page bell, Settings → Publisher News.
+- Gated behind optional permissions: Chromium `optional_permissions: [notifications, alarms]` + `optional_host_permissions: [https://301.sh/*]`; Firefox folds the origin into `optional_permissions` and carries `alarms` in the **required** set (AMO rejects it as optional).
+- Enabling seeds the seen-list (no backlog notification dump); disabling clears the alarm **before** dropping permissions; permission revocation from browser settings turns the feature off.
+- The fetch carries no identifiers, credentials, or query parameters.
+- `data_collection_permissions.required = ['none']` stays intact on Firefox.
 
 ## Cloudflare API
 
-### Base URL
-```
-https://api.cloudflare.com/client/v4
-```
-
-### Auth Headers
-```typescript
-{
-  'X-Auth-Email': email,
-  'X-Auth-Key': globalApiKey,
-  'Content-Type': 'application/json',
-}
-```
-
-### Endpoints Used
+Base URL: `https://api.cloudflare.com/client/v4`
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `/user` | Verify credentials |
+| GET | `/user` | Verify Global API Key |
+| GET | `/user/tokens/verify` | Verify user token |
+| GET | `/accounts/{id}/tokens/verify` | Verify account-owned token |
 | GET | `/accounts` | List accounts |
-| GET | `/zones` | List zones (paginated) |
+| GET | `/zones` | List zones (paginated, per_page ≤ 50) |
 | GET | `/zones?name=domain` | Check zone exists |
 | POST | `/zones` | Create zone |
 | DELETE | `/zones/:id` | Delete zone |
@@ -191,68 +147,56 @@ https://api.cloudflare.com/client/v4
 
 ### Rate Limiting
 
-Request queues with exponential backoff:
-
 | Parameter | Value |
 |-----------|-------|
-| Max concurrency | 4 (configurable) |
+| Max concurrency | 4 (configurable, ≤8) |
 | Max retries | 3 |
 | Base delay | 500ms |
 | Jitter | 30% |
 
-Respects `Retry-After` header on 429 responses.
-
-## Browser Compatibility
-
-| Browser | Version | UI | Notes |
-|---------|---------|-----|-------|
-| Chrome | ≥114 | Side Panel | Primary target |
-| Edge | ≥114 | Side Panel | Chromium-based |
-| Firefox | ≥142 | Sidebar | MV2, sidebarAction API |
-| Firefox Android | ≥142 | Sidebar | Planned (Phase 3) |
-
-## Build & Deploy
-
-### Commands
-```bash
-npm install           # Install dependencies
-npm run dev           # Dev server (Chrome)
-npm run dev:firefox   # Dev server (Firefox)
-npm run build         # Production build (Chrome)
-npm run build:firefox # Production build (Firefox)
-npm run zip:all       # Create store submission zips
-npm run typecheck     # TypeScript check
-```
-
-### Store Submission
-
-**Chrome Web Store:**
-- Upload `dist/cloudflare-tools-X.X.X-chrome.zip`
-- Privacy policy: link to GitHub `docs/privacy.md`
-
-**Firefox Add-ons:**
-- Upload `dist/cloudflare-tools-X.X.X-firefox.zip`
-- Add-on ID: `cf-tools@301.st`
-- Minimum version: Firefox 142
+Respects `Retry-After` on 429.
 
 ## Error Handling
 
-| Category | Strategy | UI |
-|----------|----------|-----|
-| Auth error | No retry | "Check credentials" |
-| Rate limit (429) | Retry with backoff | "Waiting..." |
-| Zone exists | Skip | "Skipped (exists)" |
-| Dependency error | No retry | "Blocked" |
-| Network error | Retry with backoff | "Retrying..." |
+`normalizeError(code, message, retryAfter?, httpStatus?, operation?)`:
+
+| Category | Trigger | Strategy | UI |
+|----------|---------|----------|-----|
+| Auth | known credential codes (10000/9103/6100..) | No retry | "Check your API credentials" |
+| Permission | code 9109, or HTTP 403 without key-material codes | No retry | per-operation scope hint (`PERMISSION_RECOMMENDATIONS`) |
+| Rate limit (429) | | Retry with Retry-After | "Waiting..." |
+| Validation (1061) | zone exists | Skip | "Skipped (exists)" |
+| Dependency (1099) | | No retry | "Blocked" |
+| Network / 5xx / timeout | | Retry with backoff | "Retrying..." |
+
+## Browser Compatibility
+
+| Browser | Version | UI |
+|---------|---------|-----|
+| Chrome | ≥116 | Side Panel |
+| Edge | ≥116 | Side Panel |
+| Firefox | ≥142 | Sidebar (MV2) |
+
+## Build & Deploy
+
+```bash
+npm run dev / dev:firefox      # Dev server
+npm run build / build:firefox / build:edge
+npm run zip:all                # Store submission zips (chrome + firefox + edge)
+npm run check                  # tsc + biome + vitest
+```
+
+Version lives **only** in `wxt.config.ts`. A `v*` tag drives `release.yml` (GitHub release) and `submit.yml` (Chrome/Edge auto-submit; Firefox manual — see CLAUDE.md).
 
 ## Privacy
 
-- **No data collection** — zero analytics, zero tracking
-- **Direct API calls** — requests go straight to api.cloudflare.com
-- **Local encryption** — credentials encrypted on device
-- **Open source** — full code available for audit
+- **No data collection** — zero analytics, zero tracking.
+- **Publisher news is opt-in** — off by default; a public-feed read with no identifiers when enabled.
+- **Direct API calls** — requests go straight to api.cloudflare.com.
+- **Local encryption** — secrets encrypted on device, session-only key.
+- **Open source** — full code available for audit.
 
-See [Privacy Policy](docs/privacy.md) for details.
+See [Privacy Policy](docs/privacy.md).
 
 ## Links
 

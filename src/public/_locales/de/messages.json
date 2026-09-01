@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Massenoperationen für Cloudflare-Zonen: Domains im Paket anlegen, prüfen, löschen, Cache leeren. API-Tokens und Global API Key."
+  }
+}

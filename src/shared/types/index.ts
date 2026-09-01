@@ -1,3 +1,4 @@
 export * from './api';
-export * from './tasks';
+export * from './credentials';
 export * from './errors';
+export * from './tasks';

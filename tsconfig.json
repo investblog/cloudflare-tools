@@ -6,9 +6,10 @@
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["src/shared/*"],
+      "@engine/*": ["src/engine/*"],
       "@background/*": ["src/background/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "wxt.config.ts", ".wxt/wxt.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "wxt.config.ts", ".wxt/wxt.d.ts"],
   "exclude": ["node_modules", "dist", ".output"]
 }

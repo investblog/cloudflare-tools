@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Cloudflare 区域批量操作：批量创建、检查、删除域名并清除缓存。支持 API 令牌与 Global API Key。"
+  }
+}

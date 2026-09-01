@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Operazioni in blocco sulle zone Cloudflare: crea, verifica, elimina e svuota la cache di molti domini. Token API e Global API Key."
+  }
+}

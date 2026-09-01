@@ -79,6 +79,13 @@ export interface CFPaginationInfo {
   total_pages: number;
 }
 
+export interface CFTokenVerifyResult {
+  id: string;
+  status: 'active' | 'disabled' | 'expired';
+  not_before?: string;
+  expires_on?: string;
+}
+
 export interface CreateZoneRequest {
   name: string;
   account: { id: string };

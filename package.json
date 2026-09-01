@@ -1,6 +1,6 @@
 {
   "name": "cloudflare-tools",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Bulk operations for Cloudflare zones - Browser Extension",
   "type": "module",
   "scripts": {
@@ -8,13 +8,22 @@
     "dev:firefox": "wxt -b firefox",
     "build": "wxt build",
     "build:firefox": "wxt build -b firefox",
+    "build:edge": "wxt build -b edge",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
-    "zip:all": "wxt zip && wxt zip -b firefox",
-    "typecheck": "tsc --noEmit"
+    "zip:edge": "wxt zip -b edge",
+    "zip:all": "wxt zip && wxt zip -b firefox && wxt zip -b edge",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/ test/ wxt.config.ts",
+    "lint:fix": "biome check --write src/ test/ wxt.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc --noEmit && biome check src/ test/ wxt.config.ts && vitest run"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "typescript": "^5.7.0",
+    "vitest": "^4.0.18",
     "wxt": "^0.19.0"
   }
 }

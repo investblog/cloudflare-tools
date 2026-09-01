@@ -2,23 +2,21 @@
  * Background module exports
  */
 
-export { vault, Vault, VaultLockedError } from './vault';
-export type { VaultState, Credentials } from './vault';
-
-export { cfClient, CFClient, isCFClientError, isVaultLockedError } from './cf-client';
-export type { ListZonesParams, PaginatedResult, CFClientError } from './cf-client';
+export type { CFClientError, ListZonesParams, PaginatedResult } from './cf-client';
+export { CFClient, cfClient, isCFClientError, isVaultLockedError } from './cf-client';
+export { Ledger, ledger } from './ledger';
+export type { PoolStats, QueueConfig } from './queue';
 
 export {
-  RequestPool,
+  clearAllPools,
   createPool,
   deletePool,
-  purgePool,
-  preflightPool,
   pauseAllPools,
+  preflightPool,
+  purgePool,
+  RequestPool,
   resumeAllPools,
-  clearAllPools,
   updatePoolConcurrency,
 } from './queue';
-export type { QueueConfig, PoolStats } from './queue';
-
-export { ledger, Ledger } from './ledger';
+export type { StoredProfile, StoredVaultV3, VaultState } from './vault';
+export { isProfileNotFoundError, ProfileNotFoundError, Vault, VaultLockedError, vault } from './vault';

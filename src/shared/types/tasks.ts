@@ -5,25 +5,25 @@
 export type TaskOperation = 'create' | 'delete' | 'purge';
 
 export type TaskStatus =
-  | 'queued'    // В очереди
-  | 'running'   // Выполняется
-  | 'success'   // Успешно
-  | 'failed'    // Ошибка (retryable)
-  | 'skipped'   // Пропущен (exists/duplicate)
-  | 'blocked'   // Заблокирован (dependency)
-  | 'invalid';  // Невалидный ввод
+  | 'queued' // В очереди
+  | 'running' // Выполняется
+  | 'success' // Успешно
+  | 'failed' // Ошибка (retryable)
+  | 'skipped' // Пропущен (exists/duplicate)
+  | 'blocked' // Заблокирован (dependency)
+  | 'invalid'; // Невалидный ввод
 
 export type PreflightStatus =
-  | 'will-create'  // Зона не существует, будет создана
-  | 'exists'       // Зона уже есть в аккаунте → skip
-  | 'invalid'      // Невалидный домен (парсер отклонил)
-  | 'duplicate';   // Дубликат в списке ввода
+  | 'will-create' // Зона не существует, будет создана
+  | 'exists' // Зона уже есть в аккаунте → skip
+  | 'invalid' // Невалидный домен (парсер отклонил)
+  | 'duplicate'; // Дубликат в списке ввода
 
 export interface TaskEntry {
   id: string;
   batchId: string;
-  domain: string;           // Domain name for create, zoneId for delete/purge
-  zoneName?: string;        // Zone name for delete/purge (for display)
+  domain: string; // Domain name for create, zoneId for delete/purge
+  zoneName?: string; // Zone name for delete/purge (for display)
   operation: TaskOperation;
   status: TaskStatus;
   preflightStatus?: PreflightStatus;
@@ -47,6 +47,8 @@ export interface BatchInfo {
   id: string;
   operation: TaskOperation;
   accountId: string;
+  /** Vault profile the batch was started under; undefined = pre-v0.2.0 batch. */
+  profileId?: string;
   options?: BatchOptions;
   totalCount: number;
   processedCount: number;
@@ -57,6 +59,17 @@ export interface BatchInfo {
   status: BatchStatus;
   createdAt: number;
   updatedAt: number;
+}
+
+/**
+ * Which vault profile a batch operation must run under: the stamped profile,
+ * falling back to the currently active one for pre-v0.2.0 batches.
+ */
+export function resolveBatchProfileId(
+  batchProfileId: string | undefined,
+  activeProfileId: string | null,
+): string | undefined {
+  return batchProfileId ?? activeProfileId ?? undefined;
 }
 
 export interface BatchSummary {

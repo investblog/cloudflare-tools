@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Cloudflare Tools"
+  },
+  "extDescription": {
+    "message": "Cloudflare 區域批次操作：批次建立、檢查、刪除網域並清除快取。支援 API 權杖與 Global API Key。"
+  }
+}
