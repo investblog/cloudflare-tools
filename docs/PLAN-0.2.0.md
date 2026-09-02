@@ -1,8 +1,15 @@
 # Plan: v0.2.0 "Tokens & News" (+ v0.3.0 outline)
 
-Status: **implemented 2026-09-01** (all v0.2.0 items below; v0.3.0 outline remains open).
-Pre-release verification pending: live-token checks (`cfat_` + `GET /accounts`), manual
-browser matrix run, store review URLs for Edge (see wxt.config.ts TODO).
+Status: **released 2026-09-01** — tag v0.2.0, GitHub release + Edge auto-submitted;
+CWS package uploaded, publish blocked on the Privacy practices tab (see CLAUDE.md);
+Firefox submit is manual. Post-review UI polish + 2 Codex gate sessions (5 rounds,
+all findings fixed) landed before the tag. Store console texts: docs/store-listings.md,
+store-descriptions-{chrome,firefox}.md, store-permissions.md; assets: store-assets/
+(gitignored). v0.3.0 outline below remains open.
+
+Still unverified (owner): live-token checks (`cfat_` + `GET /accounts` discovery),
+manual browser matrix run (incl. v0.1.2→0.2.0 migration), Edge review URL
+(wxt.config.ts TODO — falls back to the CWS listing until the Edge product URL is set).
 Reference donor: `W:\Projects\geo-tier-builder` @ v0.4.2 (2cbaac3) — Firefox sidebar entry,
 opt-in publisher news, welcome page, i18n, biome/vitest infra. Port, don't reinvent.
 
