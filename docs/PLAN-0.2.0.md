@@ -1,8 +1,9 @@
 # Plan: v0.2.0 "Tokens & News" (+ v0.3.0 outline)
 
-Status: **released 2026-09-01** — tag v0.2.0, GitHub release + Edge auto-submitted;
-CWS package uploaded, publish blocked on the Privacy practices tab (see CLAUDE.md);
-Firefox submit is manual. Post-review UI polish + 2 Codex gate sessions (5 rounds,
+Status: **released 2026-09-01; all three stores submitted 2026-09-02** — tag v0.2.0,
+GitHub release published. Edge auto-submitted (in review). CWS: Privacy practices
+filled by the owner, submitted for review. Firefox: submitted manually, version
+accepted on AMO. Post-review UI polish + 2 Codex gate sessions (5 rounds,
 all findings fixed) landed before the tag. Store console texts: docs/store-listings.md,
 store-descriptions-{chrome,firefox}.md, store-permissions.md; assets: store-assets/
 (gitignored). v0.3.0 outline below remains open.
