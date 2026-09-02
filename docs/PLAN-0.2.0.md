@@ -43,8 +43,11 @@ account id before verification. Fallback: ask the user for the account ID in the
 - `cf-client.ts` — single `buildHeaders(credential)`; merge the duplicated
   `fetch` / `fetchWithPagination` bodies while touching this.
 - Messaging: profile CRUD + `SWITCH_PROFILE`; panel header shows active profile.
-- Permission diagnostics after connect: probe what the token can do and disable
-  unavailable tabs instead of failing mid-batch with 403.
+- ~~Permission diagnostics after connect: probe what the token can do and disable
+  unavailable tabs instead of failing mid-batch with 403.~~ DROPPED by design
+  (vault-v3 design review): create/delete cannot be probed without side effects.
+  Shipped instead: `permission` error category (9109 / HTTP 403) with
+  per-operation scope hints at first failure (`PERMISSION_RECOMMENDATIONS`).
 - Auth form: one secret field, kind detected by prefix (manual override select for
   legacy hex keys); email field only shown for Global Key.
 
