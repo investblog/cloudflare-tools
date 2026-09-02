@@ -31,7 +31,7 @@ Bulk operations for Cloudflare zones from the sidebar: create, check, delete and
 ```
 • API token support: user tokens (cfut_) and account-owned tokens (cfat_) alongside the Global API Key
 • Multiple credential profiles with quick switching
-• Toolbar button opens the panel directly (popup removed), quick actions moved into the panel
+• Toolbar button opens the panel directly (popup removed); quick actions moved into the panel
 • "Select all" purge for a whole account and cross-account CSV export
 • Opt-in publisher news (off by default, no identifiers sent)
 • UI in English and Russian, localized store cards for 15 more languages
@@ -41,7 +41,7 @@ Bulk operations for Cloudflare zones from the sidebar: create, check, delete and
 ```
 • Поддержка API-токенов: пользовательские (cfut_) и токены аккаунта (cfat_) наряду с Global API Key
 • Несколько профилей учётных данных с быстрым переключением
-• Кнопка на панели инструментов открывает панель напрямую (попап удалён), быстрые действия переехали в панель
+• Кнопка на панели инструментов открывает панель напрямую (попап удалён); быстрые действия переехали в панель
 • «Выбрать все» для очистки кэша целого аккаунта и экспорт CSV по всем аккаунтам
 • Новости издателя по явному включению (по умолчанию выключены, без идентификаторов)
 • Интерфейс на английском и русском, карточки сторов локализованы ещё для 15 языков
