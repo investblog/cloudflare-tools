@@ -13,17 +13,30 @@ Copy-paste source for the store consoles. What lives where:
 
 ---
 
-## AMO summary (<=250)
+## AMO summary (<=250) — all locales
 
-**EN**:
-```
-Bulk operations for Cloudflare zones from the sidebar: create, check, delete and purge many domains at once. API tokens or Global API Key, multiple profiles, session-encrypted credentials, zero tracking.
-```
+AMO locale codes use hyphens (pt-BR, zh-CN, zh-TW). Paste per locale in
+Manage Listing → Describe Add-on → Summary.
 
-**RU**:
-```
-Массовые операции с зонами Cloudflare из сайдбара: создание, проверка, удаление, очистка кэша пачками. API-токены или Global API Key, несколько профилей, шифрование на время сессии, без трекинга.
-```
+| Locale | Chars | Summary |
+|---|---|---|
+| `en` | 203 | Bulk operations for Cloudflare zones from the sidebar: create, check, delete and purge many domains at once. API tokens or Global API Key, multiple profiles, session-encrypted credentials, zero tracking. |
+| `ru` | 195 | Массовые операции с зонами Cloudflare из сайдбара: создание, проверка, удаление, очистка кэша пачками. API-токены или Global API Key, несколько профилей, шифрование на время сессии, без трекинга. |
+| `de` | 233 | Massenoperationen für Cloudflare-Zonen aus der Seitenleiste: viele Domains auf einmal anlegen, prüfen, löschen und den Cache leeren. API-Tokens oder Global API Key, mehrere Profile, sitzungsverschlüsselte Zugangsdaten, kein Tracking. |
+| `es` | 233 | Operaciones masivas con zonas de Cloudflare desde la barra lateral: crea, comprueba, borra y purga la caché de muchos dominios a la vez. Tokens de API o Global API Key, varios perfiles, credenciales cifradas por sesión, cero rastreo. |
+| `fr` | 248 | Opérations en masse sur les zones Cloudflare depuis le panneau latéral : créez, vérifiez, supprimez et purgez le cache de nombreux domaines à la fois. Jetons API ou Global API Key, profils multiples, identifiants chiffrés par session, zéro pistage. |
+| `pt-BR` | 234 | Operações em massa com zonas Cloudflare na barra lateral: crie, verifique, exclua e limpe o cache de vários domínios de uma vez. Tokens de API ou Global API Key, vários perfis, credenciais criptografadas por sessão, zero rastreamento. |
+| `tr` | 237 | Kenar çubuğundan Cloudflare bölgeleri için toplu işlemler: birçok alan adını aynı anda oluşturun, denetleyin, silin ve önbelleği temizleyin. API token veya Global API Key, çoklu profil, oturumda şifrelenen kimlik bilgileri, sıfır izleme. |
+| `ja` | 112 | サイドバーからCloudflareゾーンを一括操作：多数のドメインをまとめて作成・確認・削除・キャッシュ削除。APIトークンまたはGlobal API Key、複数プロファイル、セッション暗号化の認証情報、トラッキングなし。 |
+| `ko` | 110 | 사이드바에서 Cloudflare 존 일괄 작업: 여러 도메인을 한 번에 생성·확인·삭제·캐시 퍼지. API 토큰 또는 Global API Key, 다중 프로필, 세션 암호화 자격 증명, 추적 없음. |
+| `zh-CN` | 81 | 在侧边栏批量操作 Cloudflare 区域：批量创建、检查、删除域名并清除缓存。API 令牌或 Global API Key，多配置文件，会话加密凭据，零跟踪。 |
+| `zh-TW` | 82 | 在側邊欄批次操作 Cloudflare 區域：批次建立、檢查、刪除網域並清除快取。API 權杖或 Global API Key，多設定檔，工作階段加密憑證，零追蹤。 |
+| `id` | 210 | Operasi massal zona Cloudflare dari bilah samping: buat, periksa, hapus, dan bersihkan cache banyak domain sekaligus. Token API atau Global API Key, multi profil, kredensial terenkripsi per sesi, nol pelacakan. |
+| `vi` | 208 | Thao tác hàng loạt với zone Cloudflare từ thanh bên: tạo, kiểm tra, xóa và xóa cache nhiều tên miền cùng lúc. API token hoặc Global API Key, nhiều hồ sơ, thông tin đăng nhập mã hóa theo phiên, không theo dõi. |
+| `th` | 176 | จัดการโซน Cloudflare แบบกลุ่มจากแถบข้าง: สร้าง ตรวจสอบ ลบ และล้างแคชหลายโดเมนพร้อมกัน ใช้ API Token หรือ Global API Key หลายโปรไฟล์ เข้ารหัสข้อมูลรับรองต่อเซสชัน ไม่มีการติดตาม |
+| `hi` | 189 | साइडबार से Cloudflare ज़ोन के बल्क ऑपरेशन: कई डोमेन एक साथ बनाएँ, जाँचें, हटाएँ और कैश साफ़ करें। API टोकन या Global API Key, कई प्रोफ़ाइल, सत्र-एन्क्रिप्टेड क्रेडेंशियल, कोई ट्रैकिंग नहीं। |
+| `pl` | 216 | Masowe operacje na strefach Cloudflare z paska bocznego: twórz, sprawdzaj, usuwaj i czyść cache wielu domen naraz. Tokeny API lub Global API Key, wiele profili, poświadczenia szyfrowane na czas sesji, zero śledzenia. |
+| `it` | 230 | Operazioni in blocco sulle zone Cloudflare dalla barra laterale: crea, verifica, elimina e svuota la cache di molti domini in una volta. Token API o Global API Key, più profili, credenziali cifrate per sessione, zero tracciamento. |
 
 ## Release notes v0.2.0
 
