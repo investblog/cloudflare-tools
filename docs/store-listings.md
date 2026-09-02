@@ -62,9 +62,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profiles: Global API Key, User Token and Account Token with one-click switch
 5. [cf-settings.png] Settings: rate limits, theme, opt-in publisher news, dashboard integration
 
-Edge search terms (7 terms, 18/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare bulk zones, bulk domain manager, purge cache, cloudflare api token, dns zones, bulk create domains, cloudflare accounts
+cloudflare, domain management, dns zones
 ```
 
 ================================================================================
@@ -78,9 +78,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Профили: Global API Key, пользовательский и аккаунт-токен с переключением в один клик
 5. [cf-settings.png] Настройки: лимиты запросов, тема, opt-in новости издателя, интеграция с дашбордом
 
-Edge search terms (6 terms, 15/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare массовые зоны, массовое добавление доменов, очистка кэша, api токен cloudflare, dns зоны, управление доменами
+cloudflare, управление доменами, dns зоны
 ```
 
 ================================================================================
@@ -94,9 +94,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profile: Global API Key, Benutzer- und Konto-Token mit Wechsel per Klick
 5. [cf-settings.png] Einstellungen: Rate-Limits, Theme, Opt-in-News des Herausgebers, Dashboard-Integration
 
-Edge search terms (6 terms, 15/21 words):
+Edge search terms (3 terms, 4/21 words):
 ```
-cloudflare massen zonen, domains massenhaft anlegen, cache leeren, cloudflare api token, dns zonen, domain verwaltung
+cloudflare, domainverwaltung, dns zonen
 ```
 
 ================================================================================
@@ -110,9 +110,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Perfiles: Global API Key, token de usuario y de cuenta con cambio en un clic
 5. [cf-settings.png] Ajustes: límites de peticiones, tema, noticias opcionales del editor, integración con el panel
 
-Edge search terms (6 terms, 17/21 words):
+Edge search terms (3 terms, 6/21 words):
 ```
-cloudflare zonas masivas, crear dominios en masa, purgar cache, token api cloudflare, zonas dns, gestion de dominios
+cloudflare, gestión de dominios, zonas dns
 ```
 
 ================================================================================
@@ -126,9 +126,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profils : Global API Key, jeton utilisateur et jeton de compte, bascule en un clic
 5. [cf-settings.png] Réglages : limites de requêtes, thème, actus éditeur en opt-in, intégration au tableau de bord
 
-Edge search terms (6 terms, 17/21 words):
+Edge search terms (3 terms, 6/21 words):
 ```
-cloudflare zones en masse, creer domaines en masse, purger cache, jeton api cloudflare, zones dns, gestion domaines
+cloudflare, gestion de domaines, zones dns
 ```
 
 ================================================================================
@@ -142,9 +142,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Perfis: Global API Key, token de usuário e de conta com troca em um clique
 5. [cf-settings.png] Configurações: limites de requisições, tema, notícias opt-in do editor, integração com o painel
 
-Edge search terms (6 terms, 18/21 words):
+Edge search terms (3 terms, 6/21 words):
 ```
-cloudflare zonas em massa, criar dominios em massa, limpar cache, token api cloudflare, zonas dns, gestao de dominios
+cloudflare, gestão de domínios, zonas dns
 ```
 
 ================================================================================
@@ -158,9 +158,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profiller: Global API Key, kullanıcı ve hesap belirteci, tek tıkla geçiş
 5. [cf-settings.png] Ayarlar: istek limitleri, tema, isteğe bağlı yayıncı haberleri, panel entegrasyonu
 
-Edge search terms (6 terms, 17/21 words):
+Edge search terms (3 terms, 6/21 words):
 ```
-cloudflare toplu bolge, toplu alan adi ekleme, onbellek temizleme, cloudflare api token, dns bolgeleri, alan adi yonetimi
+cloudflare, alan adı yönetimi, dns bölgeleri
 ```
 
 ================================================================================
@@ -174,9 +174,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] プロファイル：Global API Key・ユーザートークン・アカウントトークンをワンクリック切替
 5. [cf-settings.png] 設定：レート制限、テーマ、オプトインのニュース、ダッシュボード連携
 
-Edge search terms (7 terms, 9/21 words):
+Edge search terms (3 terms, 3/21 words):
 ```
-cloudflare 一括, ゾーン一括作成, キャッシュ削除, apiトークン, dns ゾーン, ドメイン管理, 一括登録
+cloudflare, ドメイン管理, dnsゾーン
 ```
 
 ================================================================================
@@ -190,9 +190,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] 프로필: Global API Key·사용자 토큰·계정 토큰을 원클릭 전환
 5. [cf-settings.png] 설정: 요청 한도, 테마, 옵트인 게시자 소식, 대시보드 연동
 
-Edge search terms (6 terms, 13/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare 일괄, 존 일괄 생성, 캐시 퍼지, api 토큰, dns 존, 도메인 관리
+cloudflare, 도메인 관리, dns 존
 ```
 
 ================================================================================
@@ -206,9 +206,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] 配置文件：Global API Key、用户令牌与账户令牌，一键切换
 5. [cf-settings.png] 设置：速率限制、主题、可选发布者动态、控制台集成
 
-Edge search terms (7 terms, 8/21 words):
+Edge search terms (3 terms, 3/21 words):
 ```
-cloudflare 批量, 批量创建区域, 清除缓存, api令牌, dns区域, 域名管理, 批量域名
+cloudflare, 域名管理, dns区域
 ```
 
 ================================================================================
@@ -222,9 +222,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] 設定檔：Global API Key、使用者權杖與帳戶權杖，一鍵切換
 5. [cf-settings.png] 設定：速率限制、主題、可選發佈者動態、控制台整合
 
-Edge search terms (7 terms, 8/21 words):
+Edge search terms (3 terms, 3/21 words):
 ```
-cloudflare 批次, 批次建立區域, 清除快取, api權杖, dns區域, 網域管理, 批次網域
+cloudflare, 網域管理, dns區域
 ```
 
 ================================================================================
@@ -238,9 +238,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profil: Global API Key, token pengguna dan token akun, beralih sekali klik
 5. [cf-settings.png] Setelan: batas permintaan, tema, berita penerbit opt-in, integrasi dasbor
 
-Edge search terms (6 terms, 15/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare zona massal, tambah domain massal, bersihkan cache, token api cloudflare, zona dns, kelola domain
+cloudflare, manajemen domain, zona dns
 ```
 
 ================================================================================
@@ -254,9 +254,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Hồ sơ: Global API Key, token người dùng và token tài khoản, chuyển bằng một cú nhấp
 5. [cf-settings.png] Cài đặt: giới hạn yêu cầu, chủ đề, tin tức opt-in, tích hợp bảng điều khiển
 
-Edge search terms (6 terms, 18/21 words):
+Edge search terms (3 terms, 7/21 words):
 ```
-cloudflare zone hang loat, them domain hang loat, xoa cache, api token cloudflare, zone dns, quan ly domain
+cloudflare, quản lý tên miền, zone dns
 ```
 
 ================================================================================
@@ -270,9 +270,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] โปรไฟล์: Global API Key โทเคนผู้ใช้และโทเคนบัญชี สลับได้ในคลิกเดียว
 5. [cf-settings.png] ตั้งค่า: ขีดจำกัดคำขอ ธีม ข่าวผู้เผยแพร่แบบสมัครใจ การเชื่อมต่อแดชบอร์ด
 
-Edge search terms (6 terms, 9/21 words):
+Edge search terms (3 terms, 4/21 words):
 ```
-cloudflare โซนแบบชุด, เพิ่มโดเมนจำนวนมาก, ล้างแคช, api โทเคน, โซน dns, จัดการโดเมน
+cloudflare, จัดการโดเมน, โซน dns
 ```
 
 ================================================================================
@@ -286,9 +286,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] प्रोफ़ाइल: Global API Key, उपयोगकर्ता व खाता टोकन, एक क्लिक में स्विच
 5. [cf-settings.png] सेटिंग्स: अनुरोध सीमाएँ, थीम, ऑप्ट-इन प्रकाशक समाचार, डैशबोर्ड एकीकरण
 
-Edge search terms (6 terms, 15/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare बल्क जोन, बल्क डोमेन जोड़ें, कैश साफ़ करें, api टोकन, dns जोन, डोमेन प्रबंधन
+cloudflare, डोमेन प्रबंधन, dns जोन
 ```
 
 ================================================================================
@@ -302,9 +302,9 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profile: Global API Key, token użytkownika i konta, przełączanie jednym kliknięciem
 5. [cf-settings.png] Ustawienia: limity żądań, motyw, opcjonalne wiadomości wydawcy, integracja z panelem
 
-Edge search terms (6 terms, 15/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare strefy masowo, masowe dodawanie domen, czyszczenie cache, token api cloudflare, strefy dns, zarzadzanie domenami
+cloudflare, zarządzanie domenami, strefy dns
 ```
 
 ================================================================================
@@ -318,8 +318,8 @@ Screenshot captions (upload order):
 4. [cf-profiles.png] Profili: Global API Key, token utente e token account con cambio in un clic
 5. [cf-settings.png] Impostazioni: limiti richieste, tema, notizie opt-in dell'editore, integrazione dashboard
 
-Edge search terms (6 terms, 17/21 words):
+Edge search terms (3 terms, 5/21 words):
 ```
-cloudflare zone in blocco, creare domini in blocco, svuota cache, token api cloudflare, zone dns, gestione domini
+cloudflare, gestione domini, zone dns
 ```
 
