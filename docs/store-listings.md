@@ -31,20 +31,20 @@ Bulk operations for Cloudflare zones from the sidebar: create, check, delete and
 ```
 • API token support: user tokens (cfut_) and account-owned tokens (cfat_) alongside the Global API Key
 • Multiple credential profiles with quick switching
-• Toolbar button opens the panel directly (popup removed); quick actions moved into the panel
+• Toolbar button opens the panel directly (popup removed), quick actions moved into the panel
 • "Select all" purge for a whole account and cross-account CSV export
 • Opt-in publisher news (off by default, no identifiers sent)
-• UI in English and Russian; localized store cards for 15 more languages
+• UI in English and Russian, localized store cards for 15 more languages
 ```
 
 **RU**
 ```
 • Поддержка API-токенов: пользовательские (cfut_) и токены аккаунта (cfat_) наряду с Global API Key
 • Несколько профилей учётных данных с быстрым переключением
-• Кнопка на панели инструментов открывает панель напрямую (попап удалён); быстрые действия переехали в панель
+• Кнопка на панели инструментов открывает панель напрямую (попап удалён), быстрые действия переехали в панель
 • «Выбрать все» для очистки кэша целого аккаунта и экспорт CSV по всем аккаунтам
 • Новости издателя по явному включению (по умолчанию выключены, без идентификаторов)
-• Интерфейс на английском и русском; карточки сторов локализованы ещё для 15 языков
+• Интерфейс на английском и русском, карточки сторов локализованы ещё для 15 языков
 ```
 
 ---
@@ -64,7 +64,7 @@ Screenshot captions (upload order):
 
 Edge search terms (7 terms, 18/21 words):
 ```
-cloudflare bulk zones; bulk domain manager; purge cache; cloudflare api token; dns zones; bulk create domains; cloudflare accounts
+cloudflare bulk zones, bulk domain manager, purge cache, cloudflare api token, dns zones, bulk create domains, cloudflare accounts
 ```
 
 ================================================================================
@@ -80,7 +80,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 15/21 words):
 ```
-cloudflare массовые зоны; массовое добавление доменов; очистка кэша; api токен cloudflare; dns зоны; управление доменами
+cloudflare массовые зоны, массовое добавление доменов, очистка кэша, api токен cloudflare, dns зоны, управление доменами
 ```
 
 ================================================================================
@@ -96,7 +96,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 15/21 words):
 ```
-cloudflare massen zonen; domains massenhaft anlegen; cache leeren; cloudflare api token; dns zonen; domain verwaltung
+cloudflare massen zonen, domains massenhaft anlegen, cache leeren, cloudflare api token, dns zonen, domain verwaltung
 ```
 
 ================================================================================
@@ -112,7 +112,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 17/21 words):
 ```
-cloudflare zonas masivas; crear dominios en masa; purgar cache; token api cloudflare; zonas dns; gestion de dominios
+cloudflare zonas masivas, crear dominios en masa, purgar cache, token api cloudflare, zonas dns, gestion de dominios
 ```
 
 ================================================================================
@@ -128,7 +128,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 17/21 words):
 ```
-cloudflare zones en masse; creer domaines en masse; purger cache; jeton api cloudflare; zones dns; gestion domaines
+cloudflare zones en masse, creer domaines en masse, purger cache, jeton api cloudflare, zones dns, gestion domaines
 ```
 
 ================================================================================
@@ -144,7 +144,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 18/21 words):
 ```
-cloudflare zonas em massa; criar dominios em massa; limpar cache; token api cloudflare; zonas dns; gestao de dominios
+cloudflare zonas em massa, criar dominios em massa, limpar cache, token api cloudflare, zonas dns, gestao de dominios
 ```
 
 ================================================================================
@@ -160,7 +160,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 17/21 words):
 ```
-cloudflare toplu bolge; toplu alan adi ekleme; onbellek temizleme; cloudflare api token; dns bolgeleri; alan adi yonetimi
+cloudflare toplu bolge, toplu alan adi ekleme, onbellek temizleme, cloudflare api token, dns bolgeleri, alan adi yonetimi
 ```
 
 ================================================================================
@@ -176,7 +176,7 @@ Screenshot captions (upload order):
 
 Edge search terms (7 terms, 9/21 words):
 ```
-cloudflare 一括; ゾーン一括作成; キャッシュ削除; apiトークン; dns ゾーン; ドメイン管理; 一括登録
+cloudflare 一括, ゾーン一括作成, キャッシュ削除, apiトークン, dns ゾーン, ドメイン管理, 一括登録
 ```
 
 ================================================================================
@@ -192,7 +192,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 13/21 words):
 ```
-cloudflare 일괄; 존 일괄 생성; 캐시 퍼지; api 토큰; dns 존; 도메인 관리
+cloudflare 일괄, 존 일괄 생성, 캐시 퍼지, api 토큰, dns 존, 도메인 관리
 ```
 
 ================================================================================
@@ -208,7 +208,7 @@ Screenshot captions (upload order):
 
 Edge search terms (7 terms, 8/21 words):
 ```
-cloudflare 批量; 批量创建区域; 清除缓存; api令牌; dns区域; 域名管理; 批量域名
+cloudflare 批量, 批量创建区域, 清除缓存, api令牌, dns区域, 域名管理, 批量域名
 ```
 
 ================================================================================
@@ -224,7 +224,7 @@ Screenshot captions (upload order):
 
 Edge search terms (7 terms, 8/21 words):
 ```
-cloudflare 批次; 批次建立區域; 清除快取; api權杖; dns區域; 網域管理; 批次網域
+cloudflare 批次, 批次建立區域, 清除快取, api權杖, dns區域, 網域管理, 批次網域
 ```
 
 ================================================================================
@@ -240,7 +240,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 15/21 words):
 ```
-cloudflare zona massal; tambah domain massal; bersihkan cache; token api cloudflare; zona dns; kelola domain
+cloudflare zona massal, tambah domain massal, bersihkan cache, token api cloudflare, zona dns, kelola domain
 ```
 
 ================================================================================
@@ -256,7 +256,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 18/21 words):
 ```
-cloudflare zone hang loat; them domain hang loat; xoa cache; api token cloudflare; zone dns; quan ly domain
+cloudflare zone hang loat, them domain hang loat, xoa cache, api token cloudflare, zone dns, quan ly domain
 ```
 
 ================================================================================
@@ -272,7 +272,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 9/21 words):
 ```
-cloudflare โซนแบบชุด; เพิ่มโดเมนจำนวนมาก; ล้างแคช; api โทเคน; โซน dns; จัดการโดเมน
+cloudflare โซนแบบชุด, เพิ่มโดเมนจำนวนมาก, ล้างแคช, api โทเคน, โซน dns, จัดการโดเมน
 ```
 
 ================================================================================
@@ -288,7 +288,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 15/21 words):
 ```
-cloudflare बल्क जोन; बल्क डोमेन जोड़ें; कैश साफ़ करें; api टोकन; dns जोन; डोमेन प्रबंधन
+cloudflare बल्क जोन, बल्क डोमेन जोड़ें, कैश साफ़ करें, api टोकन, dns जोन, डोमेन प्रबंधन
 ```
 
 ================================================================================
@@ -304,7 +304,7 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 15/21 words):
 ```
-cloudflare strefy masowo; masowe dodawanie domen; czyszczenie cache; token api cloudflare; strefy dns; zarzadzanie domenami
+cloudflare strefy masowo, masowe dodawanie domen, czyszczenie cache, token api cloudflare, strefy dns, zarzadzanie domenami
 ```
 
 ================================================================================
@@ -320,6 +320,6 @@ Screenshot captions (upload order):
 
 Edge search terms (6 terms, 17/21 words):
 ```
-cloudflare zone in blocco; creare domini in blocco; svuota cache; token api cloudflare; zone dns; gestione domini
+cloudflare zone in blocco, creare domini in blocco, svuota cache, token api cloudflare, zone dns, gestione domini
 ```
 
